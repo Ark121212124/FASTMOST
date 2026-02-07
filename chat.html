@@ -2,215 +2,132 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>FASTMOST Chat</title>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-
-<!-- Emoji -->
-<script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2/dist/index.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-:root{
-  --bg:#060912;
-  --panel:rgba(18,22,45,.75);
-  --accent:#5865f2;
-  --text:#e8ebff;
-  --blur:blur(14px);
-}
-
-*{box-sizing:border-box}
-body{
+body {
   margin:0;
-  height:100vh;
-  background:var(--bg);
-  color:var(--text);
-  font-family:Inter,system-ui;
-  display:flex;
-  flex-direction:column;
+  background:#0b1020;
+  color:white;
+  font-family:Arial;
 }
-
-/* HEADER */
-header{
-  height:56px;
-  display:flex;
-  align-items:center;
-  padding:0 16px;
-  background:var(--panel);
-  backdrop-filter:var(--blur);
-  gap:12px;
+.header {
+  padding:15px;
+  background:#141a33;
 }
-
-header button{
-  background:#1e2345;
-  border:none;
-  color:#fff;
-  padding:8px 12px;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-/* CHAT */
-#messages{
-  flex:1;
-  padding:20px;
+.messages {
+  height:calc(100vh - 120px);
   overflow-y:auto;
+  padding:15px;
+}
+.msg {
+  background:#1b2347;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:10px;
+}
+.input {
   display:flex;
-  flex-direction:column;
-  gap:14px;
+  gap:10px;
+  padding:10px;
+  background:#141a33;
 }
-
-.msg{
-  max-width:70%;
-  background:#141a3a;
-  padding:10px 12px;
-  border-radius:14px;
-  position:relative;
-}
-
-.msg.me{margin-left:auto;background:#1e2345}
-
-.msg .author{
-  font-size:12px;
-  opacity:.6;
-}
-
-.msg img{
-  max-width:220px;
+input {
+  flex:1;
+  padding:12px;
+  border:none;
   border-radius:10px;
 }
-
-/* INPUT */
-footer{
+button {
   padding:12px;
-  background:var(--panel);
-  backdrop-filter:var(--blur);
-  display:flex;
-  gap:8px;
-}
-
-footer input{
-  flex:1;
-  background:#0e1430;
   border:none;
-  padding:10px 14px;
-  border-radius:14px;
-  color:#fff;
-}
-
-footer button{
-  background:var(--accent);
-  border:none;
-  color:#fff;
-  padding:10px 14px;
-  border-radius:14px;
+  border-radius:10px;
+  background:#5865f2;
+  color:white;
   cursor:pointer;
 }
-
-/* VOICE OVERLAY */
-#voice{
-  position:fixed;
-  bottom:90px;
-  right:20px;
-  width:320px;
-  height:200px;
-  border-radius:18px;
-  overflow:hidden;
-  display:none;
-  background:#000;
-  box-shadow:0 0 40px rgba(0,0,0,.6);
+.gif {
+  max-width:200px;
+  border-radius:10px;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <button onclick="history.back()">← Назад</button>
-  <b>FASTMOST • Чат</b>
-  <button onclick="toggleVoice()">🎧 Voice</button>
-</header>
+<div class="header">
+<button onclick="history.back()">← Назад</button>
+</div>
 
-<div id="messages"></div>
+<div class="messages" id="messages"></div>
 
-<footer>
-  <button id="emojiBtn">😀</button>
-  <button onclick="openGif()">GIF</button>
-  <input id="text" placeholder="Сообщение...">
-  <button onclick="send()">➤</button>
-</footer>
-
-<!-- VOICE -->
-<div id="voice"></div>
+<div class="input">
+<button onclick="sendGif()">GIF</button>
+<input id="text" placeholder="Сообщение">
+<button onclick="send()">➤</button>
+</div>
 
 <script>
-/* FIREBASE */
-firebase.initializeApp({
-  apiKey:"ВАШ_API_KEY",
-  authDomain:"fastmost-8084.firebaseapp.com",
-  projectId:"fastmost-8084"
-});
-const db=firebase.firestore();
-const auth=firebase.auth();
-auth.signInAnonymously();
+const firebaseConfig = {
+  apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
+  authDomain: "fastmost-f8084.firebaseapp.com",
+  projectId: "fastmost-f8084"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-const room=new URLSearchParams(location.search).get("room");
-const messages=document.getElementById("messages");
+const room = new URLSearchParams(location.search).get("room");
 
-/* EMOJI */
-const picker=new EmojiButton();
-emojiBtn.onclick=()=>picker.togglePicker(emojiBtn);
-picker.on("emoji",e=>text.value+=e.emoji);
-
-/* SEND MESSAGE */
-function send(){
-  if(!text.value.trim())return;
-  db.collection("rooms").doc(room).collection("messages").add({
-    text:text.value,
-    uid:auth.currentUser.uid,
-    time:firebase.firestore.FieldValue.serverTimestamp()
-  });
+function send() {
+  if(!text.value) return;
+  db.collection("rooms").doc(room)
+    .collection("messages")
+    .add({
+      text: text.value,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
   text.value="";
 }
 
-/* LOAD */
-db.collection("rooms").doc(room).collection("messages")
-.orderBy("time")
-.onSnapshot(s=>{
-  messages.innerHTML="";
-  s.forEach(d=>{
-    const m=d.data();
-    const div=document.createElement("div");
-    div.className="msg"+(m.uid===auth.currentUser.uid?" me":"");
-    div.innerHTML=`
-      <div class="author">${m.uid===auth.currentUser.uid?"Вы":"User"}</div>
-      ${m.text.startsWith("http")?`<img src="${m.text}">`:m.text}
-    `;
-    messages.appendChild(div);
+function sendGif() {
+  fetch(`https://api.giphy.com/v1/gifs/trending?api_key=0GqIeLqsCjxbpdCUUiVNe4JzSMwKQqsQ&limit=1`)
+    .then(r=>r.json())
+    .then(d=>{
+      const url = d.data[0].images.fixed_width.url;
+      db.collection("rooms").doc(room)
+        .collection("messages")
+        .add({
+          gif:url,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    });
+}
+
+db.collection("rooms").doc(room)
+  .collection("messages")
+  .orderBy("createdAt")
+  .onSnapshot(snap=>{
+    messages.innerHTML="";
+    snap.forEach(doc=>{
+      const m = doc.data();
+      const div = document.createElement("div");
+      div.className="msg";
+
+      if(m.text) div.textContent = m.text;
+      if(m.gif) {
+        const img = document.createElement("img");
+        img.src = m.gif;
+        img.className="gif";
+        div.appendChild(img);
+      }
+
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    });
   });
-  messages.scrollTop=messages.scrollHeight;
-});
-
-/* GIF */
-async function openGif(){
-  const q=prompt("Поиск GIF");
-  if(!q)return;
-  const r=await fetch(`https://api.giphy.com/v1/gifs/search?api_key=0GqIeLqsCjxbpdCUUiVNe4JzSMwKQqsQ&q=${q}&limit=1`);
-  const j=await r.json();
-  if(j.data[0]) text.value=j.data[0].images.fixed_height.url;
-}
-
-/* VOICE */
-function toggleVoice(){
-  const v=document.getElementById("voice");
-  if(v.style.display==="block"){v.style.display="none";return;}
-  v.style.display="block";
-  v.innerHTML=`<iframe allow="camera;microphone" style="width:100%;height:100%" 
-  src="https://meet.jit.si/FASTMOST-${room}"></iframe>`;
-}
 </script>
 
 </body>
