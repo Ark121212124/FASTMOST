@@ -2,93 +2,179 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>FASTMOST Chat</title>
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FASTMOST • Чат</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const app = initializeApp({
-  apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
-  projectId:"fastmost-f8084"
-});
-const db = getFirestore(app);
-
-const room = new URLSearchParams(location.search).get("room");
-
-onSnapshot(
-  query(collection(db,"rooms",room,"messages"),orderBy("time")),
-  snap=>{
-    chat.innerHTML="";
-    snap.forEach(d=>{
-      const m=d.data();
-      chat.innerHTML+=`<div><b>${m.user}</b>: ${m.text}</div>`;
-    });
-    chat.scrollTop=99999;
-  }
-);
-
-window.send=async()=>{
-  if(!msg.value)return;
-  await addDoc(collection(db,"rooms",room,"messages"),{
-    user:"User",
-    text:msg.value,
-    time:serverTimestamp()
-  });
-  msg.value="";
-};
-</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
 <style>
-body{
+:root{
+  --bg:#0b0e14;
+  --panel:#141827cc;
+  --panel-solid:#141827;
+  --accent:#5865f2;
+  --text:#e6e8f0;
+  --muted:#8b90b3;
+}
+*{box-sizing:border-box}
+html,body{
   margin:0;
-  background:#0b0e14;
-  color:white;
-  font-family:Inter;
+  height:100%;
+  font-family:Inter,system-ui;
+  background:radial-gradient(circle at top,#1b1f3b,#0b0e14);
+  color:var(--text);
 }
-header{
-  padding:16px;
-  background:#141827;
-}
-#chat{
-  height:calc(100vh - 120px);
-  overflow:auto;
-  padding:10px;
-}
-footer{
+
+.app{
   display:flex;
-  padding:10px;
-  background:#141827;
+  height:100vh;
 }
-input{
-  flex:1;
+
+/* SIDEBAR */
+.sidebar{
+  width:260px;
+  background:var(--panel);
+  backdrop-filter:blur(18px);
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.logo{
+  font-size:22px;
+  font-weight:800;
+}
+.btn{
+  background:var(--accent);
+  border:none;
   padding:12px;
-  border:none;
-  border-radius:10px;
-}
-button{
-  margin-left:10px;
-  background:#5865f2;
-  border:none;
+  border-radius:14px;
   color:white;
-  padding:12px;
-  border-radius:10px;
+  cursor:pointer;
+}
+.btn.secondary{background:#2a2f55}
+
+/* CHAT */
+.main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+.header{
+  padding:18px;
+  background:var(--panel-solid);
+  font-weight:600;
+}
+.messages{
+  flex:1;
+  padding:24px;
+  overflow:auto;
+}
+.msg{
+  margin-bottom:16px;
+  animation:fadeUp .25s ease;
+}
+.msg span{
+  color:var(--muted);
+  font-size:12px;
+}
+.msg p{
+  margin:4px 0 0;
+}
+.input{
+  display:flex;
+  gap:12px;
+  padding:18px;
+  background:var(--panel-solid);
+}
+.input input{
+  flex:1;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  background:#0f1324;
+  color:white;
+}
+.input button{
+  width:56px;
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:none}
 }
 </style>
 </head>
 
 <body>
-<header>
-  💬 FASTMOST Chat
-  <button onclick="location.href='index.html'">←</button>
-</header>
 
-<div id="chat"></div>
+<div class="app">
 
-<footer>
-  <input id="msg" placeholder="Сообщение">
-  <button onclick="send()">➤</button>
-</footer>
+  <div class="sidebar">
+    <div class="logo">FASTMOST</div>
+    <button class="btn secondary" onclick="location.href='index.html'">← Назад</button>
+    <button class="btn" onclick="location.href='voice.html?room='+roomId">🎙 Voice</button>
+  </div>
+
+  <div class="main">
+    <div class="header" id="roomTitle">Чат</div>
+    <div class="messages" id="messages"></div>
+    <div class="input">
+      <input id="text" placeholder="Сообщение...">
+      <button class="btn" onclick="send()">➤</button>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore,collection,addDoc,onSnapshot,query,orderBy,serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const roomId=new URLSearchParams(location.search).get("room");
+
+const app=initializeApp({
+  apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
+  authDomain:"fastmost-f8084.firebaseapp.com",
+  projectId:"fastmost-f8084"
+});
+const auth=getAuth();
+const db=getFirestore();
+
+let userEmail="";
+
+onAuthStateChanged(auth,user=>{
+  if(!user) location.href="index.html";
+  userEmail=user.email;
+});
+
+onSnapshot(
+  query(collection(db,"rooms",roomId,"messages"),orderBy("time")),
+  snap=>{
+    messages.innerHTML="";
+    snap.forEach(d=>{
+      const m=d.data();
+      messages.innerHTML+=`
+        <div class="msg">
+          <span>${m.user}</span>
+          <p>${m.text}</p>
+        </div>`;
+    });
+    messages.scrollTop=99999;
+  }
+);
+
+window.send=async()=>{
+  if(!text.value) return;
+  await addDoc(collection(db,"rooms",roomId,"messages"),{
+    user:userEmail,
+    text:text.value,
+    time:serverTimestamp()
+  });
+  text.value="";
+};
+</script>
+
 </body>
 </html>
