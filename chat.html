@@ -1,308 +1,217 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FASTMOST • Чат</title>
-
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#5865f2">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FASTMOST Chat</title>
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<!-- Emoji -->
+<script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2/dist/index.min.js"></script>
 
 <style>
-/* ================= THEMES ================= */
-body[data-theme="purple"]{
-  --accent:#5865f2;
-  --bg:#070b16;
-}
-body[data-theme="cyber"]{
-  --accent:#00ffe1;
-  --bg:#020d0c;
-}
-body[data-theme="red"]{
-  --accent:#ff3b3b;
-  --bg:#120405;
-}
-
 :root{
-  --panel:rgba(20,25,45,.65);
-  --text:#e6e9ff;
+  --bg:#060912;
+  --panel:rgba(18,22,45,.75);
+  --accent:#5865f2;
+  --text:#e8ebff;
   --blur:blur(14px);
 }
 
-/* ================= BASE ================= */
 *{box-sizing:border-box}
 body{
   margin:0;
   height:100vh;
-  font-family:Inter,system-ui;
-  background:radial-gradient(1200px 600px at top,var(--accent)10%,transparent),var(--bg);
+  background:var(--bg);
   color:var(--text);
+  font-family:Inter,system-ui;
   display:flex;
   flex-direction:column;
 }
 
-/* ================= HEADER ================= */
+/* HEADER */
 header{
-  padding:14px 18px;
+  height:56px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  padding:0 16px;
   background:var(--panel);
   backdrop-filter:var(--blur);
+  gap:12px;
 }
 
 header button{
-  background:var(--accent);
+  background:#1e2345;
   border:none;
   color:#fff;
-  padding:8px 14px;
-  border-radius:10px;
+  padding:8px 12px;
+  border-radius:8px;
   cursor:pointer;
 }
 
-/* ================= CHAT ================= */
-#chat{
+/* CHAT */
+#messages{
   flex:1;
-  overflow-y:auto;
   padding:20px;
-}
-
-.message{
+  overflow-y:auto;
   display:flex;
-  gap:12px;
-  margin-bottom:14px;
+  flex-direction:column;
+  gap:14px;
 }
 
-.message img{
-  width:42px;
-  height:42px;
-  border-radius:50%;
-}
-
-.bubble{
-  background:var(--panel);
-  backdrop-filter:var(--blur);
-  padding:10px 14px;
-  border-radius:14px;
+.msg{
   max-width:70%;
+  background:#141a3a;
+  padding:10px 12px;
+  border-radius:14px;
   position:relative;
 }
 
-.bubble .name{
+.msg.me{margin-left:auto;background:#1e2345}
+
+.msg .author{
   font-size:12px;
-  opacity:.7;
+  opacity:.6;
 }
 
-.bubble .text{
-  margin-top:4px;
-  white-space:pre-wrap;
+.msg img{
+  max-width:220px;
+  border-radius:10px;
 }
 
-.actions{
-  margin-top:6px;
+/* INPUT */
+footer{
+  padding:12px;
+  background:var(--panel);
+  backdrop-filter:var(--blur);
   display:flex;
   gap:8px;
 }
 
-.actions span{
-  cursor:pointer;
-  font-size:12px;
-  opacity:.6;
-}
-.actions span:hover{opacity:1}
-
-/* ================= INPUT ================= */
-footer{
-  padding:12px;
-  display:flex;
-  gap:10px;
-  background:var(--panel);
-  backdrop-filter:var(--blur);
-}
-
 footer input{
   flex:1;
-  background:rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.1);
-  color:#fff;
+  background:#0e1430;
+  border:none;
   padding:10px 14px;
-  border-radius:12px;
+  border-radius:14px;
+  color:#fff;
 }
 
 footer button{
   background:var(--accent);
   border:none;
   color:#fff;
-  padding:0 16px;
-  border-radius:12px;
-  cursor:pointer;
-}
-
-/* ================= GIF PANEL ================= */
-#gifPanel{
-  position:fixed;
-  bottom:80px;
-  left:20px;
-  right:20px;
-  max-height:320px;
-  background:var(--panel);
-  backdrop-filter:var(--blur);
-  border-radius:16px;
-  padding:10px;
-  display:none;
-  overflow:auto;
-}
-
-.gif-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(100px,1fr));
-  gap:8px;
-}
-
-.gif-grid img{
-  width:100%;
-  border-radius:10px;
-  cursor:pointer;
-}
-
-/* ================= VOICE OVERLAY ================= */
-#voiceOverlay{
-  position:fixed;
-  top:20px;
-  right:20px;
-  background:var(--panel);
-  backdrop-filter:var(--blur);
-  padding:12px 16px;
+  padding:10px 14px;
   border-radius:14px;
+  cursor:pointer;
+}
+
+/* VOICE OVERLAY */
+#voice{
+  position:fixed;
+  bottom:90px;
+  right:20px;
+  width:320px;
+  height:200px;
+  border-radius:18px;
+  overflow:hidden;
   display:none;
+  background:#000;
+  box-shadow:0 0 40px rgba(0,0,0,.6);
 }
 </style>
 </head>
 
-<body data-theme="purple">
+<body>
 
 <header>
-  <strong>FASTMOST • Чат</strong>
-  <div>
-    <button onclick="toggleVoice()">🎧 Voice</button>
-    <button onclick="toggleTheme()">🎨</button>
-  </div>
+  <button onclick="history.back()">← Назад</button>
+  <b>FASTMOST • Чат</b>
+  <button onclick="toggleVoice()">🎧 Voice</button>
 </header>
 
-<div id="chat"></div>
-
-<div id="gifPanel">
-  <input id="gifSearch" placeholder="Поиск GIF…" oninput="searchGif()" />
-  <div class="gif-grid" id="gifGrid"></div>
-</div>
+<div id="messages"></div>
 
 <footer>
+  <button id="emojiBtn">😀</button>
   <button onclick="openGif()">GIF</button>
-  <input id="msg" placeholder="Сообщение…" />
+  <input id="text" placeholder="Сообщение...">
   <button onclick="send()">➤</button>
 </footer>
 
-<div id="voiceOverlay">🔊 Voice активен</div>
+<!-- VOICE -->
+<div id="voice"></div>
 
 <script>
-/* ================= FIREBASE ================= */
+/* FIREBASE */
 firebase.initializeApp({
-  // 🔥 ВСТАВЬ СВОЙ CONFIG
+  apiKey:"ВАШ_API_KEY",
+  authDomain:"fastmost-8084.firebaseapp.com",
+  projectId:"fastmost-8084"
 });
 const db=firebase.firestore();
 const auth=firebase.auth();
+auth.signInAnonymously();
 
-/* ================= STATE ================= */
-let theme=["purple","cyber","red"];
-let t=0;
+const room=new URLSearchParams(location.search).get("room");
+const messages=document.getElementById("messages");
 
-/* ================= CHAT ================= */
-function send(text=null){
-  const msg=text||document.getElementById("msg").value;
-  if(!msg)return;
-  db.collection("messages").add({
-    text:msg,
+/* EMOJI */
+const picker=new EmojiButton();
+emojiBtn.onclick=()=>picker.togglePicker(emojiBtn);
+picker.on("emoji",e=>text.value+=e.emoji);
+
+/* SEND MESSAGE */
+function send(){
+  if(!text.value.trim())return;
+  db.collection("rooms").doc(room).collection("messages").add({
+    text:text.value,
     uid:auth.currentUser.uid,
-    name:auth.currentUser.email,
-    avatar:auth.currentUser.photoURL||"",
-    time:Date.now()
+    time:firebase.firestore.FieldValue.serverTimestamp()
   });
-  document.getElementById("msg").value="";
+  text.value="";
 }
 
-db.collection("messages").orderBy("time").onSnapshot(s=>{
-  chat.innerHTML="";
+/* LOAD */
+db.collection("rooms").doc(room).collection("messages")
+.orderBy("time")
+.onSnapshot(s=>{
+  messages.innerHTML="";
   s.forEach(d=>{
     const m=d.data();
-    chat.innerHTML+=`
-      <div class="message">
-        <img src="${m.avatar||'https://i.imgur.com/6VBx3io.png'}">
-        <div class="bubble">
-          <div class="name">${m.name}</div>
-          <div class="text">${m.text}</div>
-          <div class="actions">
-            <span onclick="edit('${d.id}','${m.text}')">✏️</span>
-            <span onclick="reply('${m.text}')">↩️</span>
-          </div>
-        </div>
-      </div>`;
+    const div=document.createElement("div");
+    div.className="msg"+(m.uid===auth.currentUser.uid?" me":"");
+    div.innerHTML=`
+      <div class="author">${m.uid===auth.currentUser.uid?"Вы":"User"}</div>
+      ${m.text.startsWith("http")?`<img src="${m.text}">`:m.text}
+    `;
+    messages.appendChild(div);
   });
-  chat.scrollTop=chat.scrollHeight;
+  messages.scrollTop=messages.scrollHeight;
 });
 
-/* ================= EDIT / REPLY ================= */
-function edit(id,text){
-  const n=prompt("Редактировать:",text);
-  if(n)db.collection("messages").doc(id).update({text:n});
-}
-function reply(t){
-  msg.value="> "+t+"\n";
-}
-
-/* ================= GIF ================= */
-const GIPHY="0GqIeLqsCjxbpdCUUiVNe4JzSMwKQqsQ";
-function openGif(){
-  gifPanel.style.display="block";
-  loadTrending();
-}
-function loadTrending(){
-  fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY}&limit=12`)
-  .then(r=>r.json()).then(d=>{
-    gifGrid.innerHTML="";
-    d.data.forEach(g=>{
-      gifGrid.innerHTML+=`<img src="${g.images.fixed_width.url}" onclick="send('${g.images.fixed_width.url}')">`;
-    });
-  });
-}
-function searchGif(){
-  const q=gifSearch.value;
-  if(!q)return loadTrending();
-  fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY}&q=${q}&limit=12`)
-  .then(r=>r.json()).then(d=>{
-    gifGrid.innerHTML="";
-    d.data.forEach(g=>{
-      gifGrid.innerHTML+=`<img src="${g.images.fixed_width.url}" onclick="send('${g.images.fixed_width.url}')">`;
-    });
-  });
+/* GIF */
+async function openGif(){
+  const q=prompt("Поиск GIF");
+  if(!q)return;
+  const r=await fetch(`https://api.giphy.com/v1/gifs/search?api_key=0GqIeLqsCjxbpdCUUiVNe4JzSMwKQqsQ&q=${q}&limit=1`);
+  const j=await r.json();
+  if(j.data[0]) text.value=j.data[0].images.fixed_height.url;
 }
 
-/* ================= VOICE ================= */
+/* VOICE */
 function toggleVoice(){
-  voiceOverlay.style.display=
-    voiceOverlay.style.display==="block"?"none":"block";
-}
-
-/* ================= THEME ================= */
-function toggleTheme(){
-  t=(t+1)%theme.length;
-  document.body.dataset.theme=theme[t];
+  const v=document.getElementById("voice");
+  if(v.style.display==="block"){v.style.display="none";return;}
+  v.style.display="block";
+  v.innerHTML=`<iframe allow="camera;microphone" style="width:100%;height:100%" 
+  src="https://meet.jit.si/FASTMOST-${room}"></iframe>`;
 }
 </script>
+
 </body>
 </html>
