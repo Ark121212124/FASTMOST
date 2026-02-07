@@ -4,205 +4,255 @@
 <meta charset="UTF-8">
 <title>FASTMOST</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <script src="https://meet.jit.si/external_api.js"></script>
 
 <style>
-:root {
-  --bg: #0b0d12;
-  --panel: #151822;
-  --accent: #5865f2;
-  --text: #ffffff;
-  --muted: #9aa1b2;
-  --border: #23273a;
+:root{
+ --bg:#0a0c10;
+ --panel:#141824;
+ --card:#1b2033;
+ --accent:#5b6cff;
+ --text:#ffffff;
+ --muted:#9aa1b2;
+ --border:#242a44;
 }
 
-* {
-  box-sizing: border-box;
-  font-family: "Segoe UI", Arial, sans-serif;
+*{box-sizing:border-box;font-family:Inter,Segoe UI,Arial}
+
+body{
+ margin:0;
+ background:var(--bg);
+ color:var(--text);
+ height:100vh;
+ overflow:hidden;
 }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  height: 100vh;
+/* ===== AUTH ===== */
+#auth{
+ height:100vh;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ animation:fade .6s ease;
 }
 
-/* ===== LOGIN ===== */
-#login {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.auth-card{
+ background:var(--panel);
+ padding:36px;
+ border-radius:18px;
+ width:100%;
+ max-width:360px;
+ box-shadow:0 20px 60px rgba(0,0,0,.6);
+ text-align:center;
 }
 
-.login-box {
-  background: var(--panel);
-  padding: 40px;
-  border-radius: 12px;
-  width: 320px;
-  text-align: center;
-  box-shadow: 0 0 40px rgba(0,0,0,.4);
+.brand{
+ font-size:30px;
+ font-weight:800;
+ color:var(--accent);
+ letter-spacing:1px;
+ margin-bottom:10px;
 }
 
-.brand {
-  font-size: 28px;
-  font-weight: bold;
-  color: var(--accent);
-  margin-bottom: 10px;
+.auth-card p{
+ color:var(--muted);
+ font-size:14px;
 }
 
-.login-box input {
-  width: 100%;
-  padding: 12px;
-  margin-top: 15px;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-  background: #0f1220;
-  color: white;
+.auth-card input{
+ width:100%;
+ padding:14px;
+ margin-top:14px;
+ border-radius:12px;
+ border:1px solid var(--border);
+ background:#0f1322;
+ color:white;
+ outline:none;
+ transition:.2s;
 }
 
-.login-box button {
-  margin-top: 20px;
-  width: 100%;
-  padding: 12px;
-  background: var(--accent);
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
+.auth-card input:focus{
+ border-color:var(--accent);
+}
+
+.auth-card button{
+ width:100%;
+ padding:14px;
+ margin-top:20px;
+ border:none;
+ border-radius:12px;
+ background:linear-gradient(135deg,var(--accent),#7a88ff);
+ color:white;
+ font-size:16px;
+ cursor:pointer;
+ transition:.2s;
+}
+
+.auth-card button:hover{
+ transform:translateY(-1px);
 }
 
 /* ===== APP ===== */
-#app {
-  display: none;
-  height: 100vh;
+#app{display:none;height:100vh}
+
+.layout{
+ display:flex;
+ height:100%;
 }
 
-.sidebar {
-  width: 260px;
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-  padding: 20px;
+/* SIDEBAR */
+.sidebar{
+ width:260px;
+ background:var(--panel);
+ border-right:1px solid var(--border);
+ padding:20px;
+ display:flex;
+ flex-direction:column;
 }
 
-.sidebar h2 {
-  margin: 0 0 20px;
-  color: var(--accent);
+.sidebar h2{
+ margin:0 0 15px;
+ color:var(--accent);
 }
 
-.sidebar input,
-.sidebar button {
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
+.sidebar input{
+ padding:12px;
+ margin-bottom:10px;
+ border-radius:10px;
+ border:1px solid var(--border);
+ background:#0f1322;
+ color:white;
 }
 
-.sidebar input {
-  background: #0f1220;
-  color: white;
+.sidebar button{
+ padding:12px;
+ border:none;
+ border-radius:10px;
+ background:var(--accent);
+ color:white;
+ cursor:pointer;
+ margin-bottom:8px;
 }
 
-.sidebar button {
-  background: var(--accent);
-  color: white;
-  cursor: pointer;
+/* MAIN */
+.main{
+ flex:1;
+ display:flex;
+ flex-direction:column;
 }
 
-.main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.header{
+ padding:14px 20px;
+ background:var(--panel);
+ border-bottom:1px solid var(--border);
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
 }
 
-.header {
-  padding: 15px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
+.participants{
+ font-size:14px;
+ color:var(--muted);
 }
 
-#jitsi {
-  flex: 1;
+#jitsi{flex:1}
+
+/* MOBILE */
+@media(max-width:800px){
+ .sidebar{width:100%;height:auto;flex-direction:row;gap:6px}
+ .layout{flex-direction:column}
 }
 
-.wrapper {
-  display: flex;
-  height: 100%;
+/* ANIMATIONS */
+@keyframes fade{
+ from{opacity:0;transform:scale(.96)}
+ to{opacity:1}
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="login">
-  <div class="login-box">
-    <div class="brand">FASTMOST</div>
-    <p class="muted">Голос и чат</p>
-    <input id="nickname" placeholder="Введите никнейм">
-    <button onclick="enter()">Войти</button>
-  </div>
+<!-- AUTH -->
+<div id="auth">
+ <div class="auth-card">
+  <div class="brand">FASTMOST</div>
+  <p>Вход только по электронной почте</p>
+  <input id="email" placeholder="email@example.com">
+  <button onclick="auth()">Продолжить</button>
+ </div>
 </div>
 
 <!-- APP -->
 <div id="app">
-  <div class="wrapper">
-    <div class="sidebar">
-      <h2>FASTMOST</h2>
-      <input id="room" placeholder="Код комнаты">
-      <button onclick="join()">Войти в комнату</button>
-      <button onclick="create()">Создать комнату</button>
-    </div>
-
-    <div class="main">
-      <div class="header" id="roomTitle">Комната</div>
-      <div id="jitsi"></div>
-    </div>
+ <div class="layout">
+  <div class="sidebar">
+   <h2>Комнаты</h2>
+   <input id="room" placeholder="Название комнаты">
+   <input id="pass" placeholder="Пароль комнаты">
+   <button onclick="join()">Войти</button>
+   <button onclick="create()">Создать</button>
   </div>
+
+  <div class="main">
+   <div class="header">
+    <div id="roomTitle">Не подключено</div>
+    <div class="participants" id="users">Участники: 0</div>
+   </div>
+   <div id="jitsi"></div>
+  </div>
+ </div>
 </div>
 
 <script>
 let api;
-let username;
+let email;
+let currentRoom;
 
-function enter() {
-  username = document.getElementById("nickname").value.trim();
-  if (!username) return alert("Введите ник");
-
-  document.getElementById("login").style.display = "none";
-  document.getElementById("app").style.display = "block";
+function auth(){
+ email=document.getElementById("email").value.trim();
+ const re=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+ if(!re.test(email)) return alert("Введите корректный email");
+ document.getElementById("auth").style.display="none";
+ document.getElementById("app").style.display="block";
 }
 
-function create() {
-  const room = "fastmost-" + Math.random().toString(36).substring(2,8);
-  joinRoom(room);
+function create(){
+ const r="fastmost-"+Math.random().toString(36).slice(2,8);
+ joinRoom(r);
 }
 
-function join() {
-  const room = document.getElementById("room").value.trim();
-  if (!room) return alert("Введите код комнаты");
-  joinRoom(room);
+function join(){
+ const r=document.getElementById("room").value.trim();
+ const p=document.getElementById("pass").value.trim();
+ if(!r||!p) return alert("Комната и пароль обязательны");
+ joinRoom(r+"-"+btoa(p));
 }
 
-function joinRoom(room) {
-  document.getElementById("roomTitle").innerText = "Комната: " + room;
+function joinRoom(room){
+ currentRoom=room;
+ document.getElementById("roomTitle").innerText="Комната: "+room;
+ if(api) api.dispose();
 
-  if (api) api.dispose();
+ api=new JitsiMeetExternalAPI("meet.jit.si",{
+  roomName:room,
+  parentNode:document.getElementById("jitsi"),
+  userInfo:{displayName:email},
+  configOverwrite:{
+   startWithVideoMuted:true,
+   prejoinPageEnabled:false
+  }
+ });
 
-  api = new JitsiMeetExternalAPI("meet.jit.si", {
-    roomName: room,
-    parentNode: document.getElementById("jitsi"),
-    userInfo: { displayName: username },
-    configOverwrite: {
-      startWithAudioMuted: false,
-      startWithVideoMuted: true
-    }
-  });
+ api.addListener("participantJoined",update);
+ api.addListener("participantLeft",update);
+ update();
+}
+
+function update(){
+ api.getParticipantsInfo().then(p=>{
+  document.getElementById("users").innerText="Участники: "+p.length;
+ });
 }
 </script>
 
