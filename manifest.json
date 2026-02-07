@@ -1,0 +1,15 @@
+{
+  "name": "FASTMOST",
+  "short_name": "FASTMOST",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0b0e14",
+  "theme_color": "#5865f2",
+  "icons": [
+    {
+      "src": "https://i.imgur.com/8Km9tLL.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
