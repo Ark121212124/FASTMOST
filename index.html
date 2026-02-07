@@ -3,61 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <title>FASTMOST</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<div class="page">
-  <div class="header">FASTMOST</div>
+<h1>FASTMOST</h1>
 
-  <div class="panel">
-    <h2>💬 Текстовые комнаты</h2>
-    <div class="input-row">
-      <input id="textName" placeholder="Название комнаты">
-      <button onclick="createRoom('text')">Создать</button>
-    </div>
-    <div id="textRooms" class="room-list"></div>
-  </div>
+<input id="roomName" placeholder="Название комнаты">
+<button id="createRoom">Создать</button>
 
-  <div class="panel">
-    <h2>🎧 Voice комнаты</h2>
-    <div class="input-row">
-      <input id="voiceName" placeholder="Название комнаты">
-      <button onclick="createRoom('voice')">Создать</button>
-    </div>
-    <div id="voiceRooms" class="room-list"></div>
-  </div>
-</div>
+<div id="roomList"></div>
 
-<script>
-const rooms = JSON.parse(localStorage.getItem('rooms')||'[]');
+<script type="module">
+import { db } from "./firebase.js";
+import { collection, addDoc, onSnapshot } from
+"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-function save(){localStorage.setItem('rooms',JSON.stringify(rooms));}
+const roomsRef = collection(db,"rooms");
 
-function createRoom(type){
-  const input = type==='text'?textName:voiceName;
-  if(!input.value.trim()) return;
-  rooms.push({id:Date.now(),type,name:input.value});
-  input.value='';
-  save(); render();
-}
+createRoom.onclick = async ()=>{
+  if(!roomName.value) return;
+  await addDoc(roomsRef,{ name:roomName.value });
+  roomName.value="";
+};
 
-function render(){
-  textRooms.innerHTML='';
-  voiceRooms.innerHTML='';
-  rooms.forEach(r=>{
-    const div=document.createElement('div');
-    div.className='room';
-    div.textContent='# '+r.name;
-    div.onclick=()=>{
-      if(r.type==='text') location.href=`chat.html?room=${r.id}`;
-      else alert('Voice overlay скоро');
-    };
-    (r.type==='text'?textRooms:voiceRooms).appendChild(div);
+onSnapshot(roomsRef,snap=>{
+  roomList.innerHTML="";
+  snap.forEach(d=>{
+    const a=document.createElement("a");
+    a.href=`chat.html?room=${d.id}`;
+    a.textContent=d.data().name;
+    roomList.appendChild(a);
   });
-}
-render();
+});
 </script>
 
 </body>
