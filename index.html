@@ -5,7 +5,7 @@
 <title>FASTMOST</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Gravatar / MD5 -->
+<!-- MD5 для Gravatar -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <script type="module">
@@ -32,13 +32,10 @@ const firebaseConfig = {
   apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
   authDomain: "fastmost-f8084.firebaseapp.com",
   projectId: "fastmost-f8084",
-  storageBucket: "fastmost-f8084.firebasestorage.app",
   messagingSenderId: "153310068244",
-  appId: "1:153310068244:web:f0cce97ba520da38dc3101",
-  measurementId: "G-QJFEKWN6HS"
+  appId: "1:153310068244:web:f0cce97ba520da38dc3101"
 };
 
-/* ===== LOGO (МОЖНО ЗАМЕНИТЬ) ===== */
 const FASTMOST_LOGO_URL = "https://i.imgur.com/8Km9tLL.png";
 
 /* ================= INIT ================= */
@@ -55,11 +52,11 @@ function gravatar(email){
 
 /* ================= AUTH ================= */
 window.register = async () => {
-  const email = emailInput.value.trim();
-  const pass = passwordInput.value.trim();
-  if(!email || !pass) return alert("Введите email и пароль");
-
   try {
+    const email = emailInput.value.trim();
+    const pass = passwordInput.value.trim();
+    if(!email || !pass) return alert("Введите email и пароль");
+
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     await sendEmailVerification(cred.user);
 
@@ -81,15 +78,8 @@ window.login = async () => {
       emailInput.value.trim(),
       passwordInput.value.trim()
     );
-  } catch (e) {
-    alert(
-      "Ошибка входа:\n" +
-      (e.code === "auth/wrong-password" ? "Неверный пароль" :
-       e.code === "auth/user-not-found" ? "Пользователь не найден" :
-       e.code === "auth/invalid-email" ? "Некорректный email" :
-       e.code === "auth/too-many-requests" ? "Слишком много попыток. Попробуйте позже" :
-       e.message)
-    );
+  } catch(e){
+    alert("Ошибка входа:\n" + e.message);
   }
 };
 
@@ -98,17 +88,31 @@ window.logout = async () => {
   location.reload();
 };
 
-/* ================= AVATAR ================= */
+/* ================= AVATAR (ИСПРАВЛЕНО) ================= */
 window.saveAvatar = async () => {
-  const user = auth.currentUser;
-  const url = avatarUrl.value.trim();
-  const avatar = url || gravatar(user.email);
+  try {
+    const user = auth.currentUser;
+    const input = document.getElementById("avatarUrl");
+    const url = input.value.trim();
 
-  await setDoc(doc(db,"users",user.uid),{
-    avatar
-  },{merge:true});
+    if(!url && !user.email){
+      return alert("Введите ссылку на аватар");
+    }
 
-  avatarImg.src = avatar;
+    const avatar = url || gravatar(user.email);
+
+    await setDoc(
+      doc(db,"users",user.uid),
+      { avatar },
+      { merge:true }
+    );
+
+    avatarImg.src = avatar;
+    input.value = "";
+    alert("Аватар сохранён ✅");
+  } catch(e){
+    alert("Ошибка сохранения аватара:\n" + e.message);
+  }
 };
 
 /* ================= STATE ================= */
@@ -131,7 +135,9 @@ onAuthStateChanged(auth, async user => {
   userEmail.innerText = user.email;
 
   const snap = await getDoc(doc(db,"users",user.uid));
-  avatarImg.src = snap.exists() ? snap.data().avatar : gravatar(user.email);
+  avatarImg.src = snap.exists()
+    ? snap.data().avatar
+    : gravatar(user.email);
 });
 </script>
 
@@ -142,14 +148,12 @@ body{
   color:white;
   font-family:Inter,Segoe UI,Arial;
 }
-
 .center{
   min-height:100vh;
   display:flex;
   align-items:center;
   justify-content:center;
 }
-
 .card{
   background:#141827;
   padding:32px;
@@ -157,21 +161,9 @@ body{
   width:100%;
   max-width:380px;
   text-align:center;
-  box-shadow:0 30px 80px rgba(0,0,0,.6);
 }
-
-.logo{
-  width:64px;
-  margin-bottom:8px;
-}
-
-.brand{
-  font-size:28px;
-  font-weight:900;
-  color:#6b7cff;
-  margin-bottom:10px;
-}
-
+.logo{width:64px;margin-bottom:6px}
+.brand{font-size:28px;font-weight:900;color:#6b7cff}
 input{
   width:100%;
   padding:14px;
@@ -181,18 +173,15 @@ input{
   background:#0f1324;
   color:white;
 }
-
 button{
   width:100%;
   padding:14px;
   margin-top:14px;
   border:none;
   border-radius:12px;
-  background:linear-gradient(135deg,#6b7cff,#8b98ff);
+  background:#6b7cff;
   color:white;
-  cursor:pointer;
 }
-
 .avatar{
   width:96px;
   height:96px;
@@ -205,7 +194,6 @@ button{
 
 <body>
 
-<!-- AUTH -->
 <div id="authBox" class="center">
   <div class="card">
     <img id="logoImg" class="logo">
@@ -217,14 +205,13 @@ button{
   </div>
 </div>
 
-<!-- APP -->
 <div id="appBox" class="center" style="display:none">
   <div class="card">
     <img id="logoImg" class="logo">
     <div class="brand">FASTMOST</div>
 
     <img id="avatarImg" class="avatar">
-    <input id="avatarUrl" placeholder="Ссылка на аватар (необязательно)">
+    <input id="avatarUrl" placeholder="Ссылка на аватар">
     <button onclick="saveAvatar()">Сохранить аватар</button>
 
     <p id="userEmail"></p>
