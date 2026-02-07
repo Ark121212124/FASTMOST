@@ -2,208 +2,109 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FASTMOST</title>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-:root{
-  --accent:#5865f2;
-  --bg:#070b16;
-  --panel:rgba(20,25,45,.75);
-  --text:#e6e9ff;
-  --blur:blur(14px);
-}
-
-*{box-sizing:border-box}
-body{
+body {
   margin:0;
-  height:100vh;
-  font-family:Inter,system-ui;
-  background:
-    radial-gradient(1200px 600px at top,var(--accent)15%,transparent),
-    var(--bg);
-  color:var(--text);
+  background:#0b1020;
+  font-family:Arial;
+  color:#fff;
 }
-
-/* ===== LAYOUT ===== */
-.app{
-  display:grid;
-  grid-template-columns:240px 1fr;
-  height:100vh;
+.wrapper {
+  padding:30px;
 }
-
-/* ===== SIDEBAR ===== */
-.sidebar{
+.box {
+  background:#141a33;
   padding:20px;
-  background:var(--panel);
-  backdrop-filter:var(--blur);
-  display:flex;
-  flex-direction:column;
-  gap:14px;
+  border-radius:16px;
+  margin-bottom:20px;
 }
-
-.sidebar h2{
-  margin:0 0 10px;
-}
-
-.sidebar button{
-  background:#1e2345;
+input, button {
+  width:100%;
+  padding:12px;
   border:none;
-  color:#fff;
-  padding:10px;
   border-radius:10px;
+}
+button {
+  background:#5865f2;
+  color:white;
   cursor:pointer;
+  margin-top:10px;
 }
-
-/* ===== MAIN ===== */
-.main{
-  padding:24px;
-  display:flex;
-  flex-direction:column;
-  gap:20px;
-}
-
-.hero{
-  padding:24px;
-  border-radius:18px;
-  background:linear-gradient(135deg,#5865f2,#7b7fff);
-}
-
-.rooms{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:20px;
-}
-
-.panel{
-  background:var(--panel);
-  backdrop-filter:var(--blur);
-  border-radius:18px;
-  padding:18px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-.panel input{
-  background:#0f1430;
-  border:none;
-  padding:10px;
-  border-radius:10px;
-  color:#fff;
-}
-
-.panel button{
-  background:var(--accent);
-  border:none;
-  padding:10px;
-  border-radius:10px;
-  color:#fff;
-  cursor:pointer;
-}
-
-.list{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.room{
-  padding:10px;
-  border-radius:10px;
-  background:#141a3a;
+.room {
+  margin-top:10px;
   cursor:pointer;
 }
 </style>
 </head>
 
 <body>
+<div class="wrapper">
 
-<div class="app">
+<h1>FASTMOST</h1>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <h2>FASTMOST</h2>
-    <button onclick="location.href='index.html'">🏠 Главная</button>
-    <button onclick="location.href='profile.html'">👤 Профиль</button>
-    <button onclick="location.href='admin.html'">🛠 Админка</button>
-  </aside>
+<div class="box">
+<h3>Текстовая комната</h3>
+<input id="textName" placeholder="Название">
+<button onclick="createRoom('chat')">Создать</button>
+<div id="chatRooms"></div>
+</div>
 
-  <!-- MAIN -->
-  <main class="main">
+<div class="box">
+<h3>Voice комната</h3>
+<input id="voiceName" placeholder="Название">
+<button onclick="createRoom('voice')">Создать</button>
+<div id="voiceRooms"></div>
+</div>
 
-    <div class="hero">
-      <h1>FASTMOST</h1>
-      <p>Голосовые и текстовые комнаты нового поколения</p>
-    </div>
-
-    <div class="rooms">
-
-      <!-- TEXT ROOMS -->
-      <div class="panel">
-        <h3>💬 Текстовые комнаты</h3>
-        <input id="textName" placeholder="Название комнаты">
-        <button onclick="createTextRoom()">Создать</button>
-        <div id="textRooms" class="list"></div>
-      </div>
-
-      <!-- VOICE ROOMS -->
-      <div class="panel">
-        <h3>🎧 Voice-комнаты</h3>
-        <input id="voiceName" placeholder="Название комнаты">
-        <button onclick="createVoiceRoom()">Создать</button>
-        <div id="voiceRooms" class="list"></div>
-      </div>
-
-    </div>
-
-  </main>
 </div>
 
 <script>
-/* ===== FIREBASE ===== */
-firebase.initializeApp({
-  apiKey: "ВАШ_API_KEY",
-  authDomain: "fastmost-8084.firebaseapp.com",
-  projectId: "fastmost-8084"
-});
+const firebaseConfig = {
+  apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
+  authDomain: "fastmost-f8084.firebaseapp.com",
+  projectId: "fastmost-f8084"
+};
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ===== CREATE ROOMS ===== */
-function createTextRoom(){
-  const name=document.getElementById("textName").value.trim();
-  if(!name) return;
-  db.collection("rooms").add({name,type:"text"});
+function createRoom(type) {
+  const name = type === 'chat'
+    ? textName.value
+    : voiceName.value;
+
+  if(!name) return alert("Введите название");
+
+  db.collection("rooms").add({
+    name,
+    type,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
 }
 
-function createVoiceRoom(){
-  const name=document.getElementById("voiceName").value.trim();
-  if(!name) return;
-  db.collection("rooms").add({name,type:"voice"});
-}
+db.collection("rooms").onSnapshot(snap=>{
+  chatRooms.innerHTML = "";
+  voiceRooms.innerHTML = "";
 
-/* ===== LOAD ROOMS ===== */
-db.collection("rooms").onSnapshot(s=>{
-  textRooms.innerHTML="";
-  voiceRooms.innerHTML="";
-  s.forEach(d=>{
-    const r=d.data();
-    const el=document.createElement("div");
-    el.className="room";
-    el.textContent="# "+r.name;
-    el.onclick=()=>location.href=
-      r.type==="text"
-        ?`chat.html?room=${d.id}`
-        :`voice.html?room=${d.id}`;
-    (r.type==="text"?textRooms:voiceRooms).appendChild(el);
+  snap.forEach(doc=>{
+    const r = doc.data();
+    const div = document.createElement("div");
+    div.className = "room";
+    div.textContent = "# " + r.name;
+
+    if(r.type === "chat"){
+      div.onclick = ()=>location.href=`chat.html?room=${doc.id}`;
+      chatRooms.appendChild(div);
+    } else {
+      div.onclick = ()=>location.href=`voice.html?room=${doc.id}`;
+      voiceRooms.appendChild(div);
+    }
   });
 });
 </script>
-
 </body>
 </html>
