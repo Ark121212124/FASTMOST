@@ -2,190 +2,112 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>FASTMOST</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
 :root{
   --bg:#0b1020;
-  --panel:#12183a;
-  --panel-2:#161d4f;
-  --accent:#5865f2;
-  --text:#ffffff;
-  --muted:#9aa0d4;
+  --panel:#121933;
+  --panel2:#161f40;
+  --accent:#6c7cff;
+  --text:#e6e9ff;
 }
-
-*{box-sizing:border-box}
-html,body{
-  margin:0;
-  height:100%;
-  font-family:Inter,Arial,sans-serif;
-  background:radial-gradient(1200px 600px at top,var(--panel-2),var(--bg));
+*{box-sizing:border-box;font-family:Inter,system-ui}
+body{
+  margin:0;background:radial-gradient(1200px 600px at top,#1a235a,#060812);
   color:var(--text);
 }
-
-.app{
-  display:flex;
-  height:100vh;
+header{
+  padding:24px;font-size:28px;font-weight:700;
 }
-
-/* sidebar */
-.sidebar{
-  width:220px;
-  background:rgba(10,14,35,.9);
-  padding:16px;
-}
-
-.sidebar h2{
-  margin:0 0 20px;
-}
-
-.nav button{
-  width:100%;
-  margin-bottom:10px;
-  padding:10px;
-  border:none;
-  border-radius:10px;
-  background:rgba(255,255,255,.06);
-  color:white;
-  cursor:pointer;
-}
-
-/* main */
-.main{
-  flex:1;
-  padding:24px;
-  overflow:auto;
-}
-
-.header{
-  background:linear-gradient(135deg,#5865f2,#7b83ff);
-  border-radius:18px;
-  padding:24px;
-  margin-bottom:20px;
-}
-
-.cards{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:20px;
-}
-
+.wrapper{padding:24px;display:grid;gap:24px}
 .card{
-  background:rgba(255,255,255,.06);
-  border-radius:16px;
-  padding:16px;
+  background:linear-gradient(180deg,var(--panel),#0b1020);
+  border-radius:18px;
+  padding:20px;
 }
-
-.card h3{
-  margin-top:0;
-}
-
-.input-row{
-  display:flex;
-  gap:10px;
-}
-
-.input-row input{
+h2{margin:0 0 12px;font-size:18px}
+.row{display:flex;gap:10px}
+input{
   flex:1;
-  padding:10px;
-  border-radius:10px;
+  padding:12px 14px;
+  border-radius:12px;
   border:none;
-  background:rgba(255,255,255,.08);
-  color:white;
+  background:#0e1430;
+  color:#fff;
 }
-
-.input-row button{
-  padding:10px 16px;
-  border-radius:10px;
+button{
+  padding:12px 18px;
+  border-radius:12px;
   border:none;
   background:var(--accent);
-  color:white;
+  color:#fff;
   cursor:pointer;
 }
-
-.list{
-  margin-top:14px;
-}
-
+.list{margin-top:14px;display:grid;gap:10px}
 .room{
-  padding:10px;
-  border-radius:10px;
-  background:rgba(255,255,255,.05);
-  margin-bottom:8px;
+  padding:12px 14px;
+  background:var(--panel2);
+  border-radius:12px;
   cursor:pointer;
 }
+.room:hover{background:#1d2760}
 </style>
 </head>
-
 <body>
-<div class="app">
 
-  <aside class="sidebar">
-    <h2>FASTMOST</h2>
-    <div class="nav">
-      <button>🏠 Главная</button>
-      <button>👤 Профиль</button>
-      <button>🛠 Админка</button>
-    </div>
-  </aside>
+<header>FASTMOST</header>
 
-  <main class="main">
-    <div class="header">
-      <h1>FASTMOST</h1>
-      <p>Голосовые и текстовые комнаты нового поколения</p>
-    </div>
+<div class="wrapper">
 
-    <div class="cards">
+<div class="card">
+  <h2>💬 Текстовые комнаты</h2>
+  <div class="row">
+    <input id="textName" placeholder="Название комнаты">
+    <button onclick="createRoom('text')">Создать</button>
+  </div>
+  <div id="textRooms" class="list"></div>
+</div>
 
-      <!-- TEXT -->
-      <div class="card">
-        <h3>💬 Текстовые комнаты</h3>
-        <div class="input-row">
-          <input id="textName" placeholder="Название комнаты"/>
-          <button onclick="createText()">Создать</button>
-        </div>
-        <div id="textRooms" class="list"></div>
-      </div>
-
-      <!-- VOICE -->
-      <div class="card">
-        <h3>🎧 Voice-комнаты</h3>
-        <div class="input-row">
-          <input id="voiceName" placeholder="Название комнаты"/>
-          <button onclick="createVoice()">Создать</button>
-        </div>
-        <div id="voiceRooms" class="list"></div>
-      </div>
-
-    </div>
-  </main>
+<div class="card">
+  <h2>🎧 Voice комнаты</h2>
+  <div class="row">
+    <input id="voiceName" placeholder="Название комнаты">
+    <button onclick="createRoom('voice')">Создать</button>
+  </div>
+  <div id="voiceRooms" class="list"></div>
+</div>
 
 </div>
 
 <script>
-function createText(){
-  const name=document.getElementById('textName').value.trim();
-  if(!name)return;
-  const div=document.createElement('div');
-  div.className='room';
-  div.textContent='# '+name;
-  div.onclick=()=>location.href='chat.html?room='+encodeURIComponent(name);
-  document.getElementById('textRooms').appendChild(div);
-  document.getElementById('textName').value='';
+const rooms = JSON.parse(localStorage.getItem('rooms')||'[]');
+
+function save(){ localStorage.setItem('rooms',JSON.stringify(rooms)); }
+
+function createRoom(type){
+  const input = type==='text'?textName:voiceName;
+  if(!input.value.trim()) return;
+  rooms.push({id:Date.now(),type,name:input.value});
+  input.value='';
+  save(); render();
 }
 
-function createVoice(){
-  const name=document.getElementById('voiceName').value.trim();
-  if(!name)return;
-  const div=document.createElement('div');
-  div.className='room';
-  div.textContent='🔊 '+name;
-  document.getElementById('voiceRooms').appendChild(div);
-  document.getElementById('voiceName').value='';
+function render(){
+  textRooms.innerHTML='';
+  voiceRooms.innerHTML='';
+  rooms.forEach(r=>{
+    const div=document.createElement('div');
+    div.className='room';
+    div.textContent='# '+r.name;
+    div.onclick=()=>{
+      if(r.type==='text') location.href=`chat.html?room=${r.id}`;
+      else alert('Voice-страница позже (overlay готов)');
+    };
+    (r.type==='text'?textRooms:voiceRooms).appendChild(div);
+  });
 }
+render();
 </script>
-
 </body>
 </html>
-
