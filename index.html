@@ -15,23 +15,20 @@
   --panel:#141827cc;
   --panel-solid:#141827;
   --accent:#5865f2;
-  --accent2:#3ba55d;
   --text:#e6e8f0;
   --muted:#8b90b3;
   --radius:18px;
 }
-
 *{box-sizing:border-box}
 html,body{
   margin:0;
   height:100%;
-  background:
-    radial-gradient(circle at top,#1b1f3b,#0b0e14);
+  background:radial-gradient(circle at top,#1b1f3b,#0b0e14);
   font-family:Inter,system-ui;
   color:var(--text);
 }
 
-/* ===== APP LAYOUT ===== */
+/* ===== LAYOUT ===== */
 #app{
   display:flex;
   height:100vh;
@@ -46,16 +43,13 @@ html,body{
   padding:20px;
   display:flex;
   flex-direction:column;
-  gap:16px;
+  gap:14px;
 }
-
 .logo{
   font-size:22px;
   font-weight:900;
-  letter-spacing:1px;
 }
-
-.create-btn{
+.btn{
   background:var(--accent);
   border:none;
   padding:14px;
@@ -65,7 +59,7 @@ html,body{
   cursor:pointer;
   transition:.2s;
 }
-.create-btn:hover{
+.btn:hover{
   transform:translateY(-2px);
   box-shadow:0 10px 30px rgba(88,101,242,.4);
 }
@@ -84,31 +78,22 @@ html,body{
   padding:40px;
   margin-bottom:32px;
 }
-.hero h1{
-  margin:0;
-  font-size:34px;
-}
-.hero p{
-  margin-top:10px;
-  opacity:.9;
-}
+.hero h1{margin:0;font-size:34px}
+.hero p{margin-top:10px;opacity:.9}
 
 /* ===== SECTIONS ===== */
-.section{
-  margin-bottom:40px;
-}
+.section{margin-bottom:40px}
 .section-title{
   font-size:18px;
   margin-bottom:14px;
 }
 
-/* ===== ROOM GRID ===== */
+/* ===== ROOMS ===== */
 .rooms{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
   gap:18px;
 }
-
 .room{
   background:var(--panel);
   backdrop-filter:blur(16px);
@@ -116,31 +101,13 @@ html,body{
   padding:20px;
   cursor:pointer;
   transition:.25s;
-  position:relative;
-  overflow:hidden;
 }
-.room::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(120deg,transparent,rgba(255,255,255,.08),transparent);
-  opacity:0;
-  transition:.25s;
-}
-.room:hover::after{opacity:1}
 .room:hover{
   transform:translateY(-6px);
   box-shadow:0 20px 50px rgba(0,0,0,.45);
 }
-
-.room .type{
-  font-size:13px;
-  color:var(--muted);
-}
-.room .name{
-  font-size:20px;
-  margin-top:8px;
-}
+.room .type{font-size:13px;color:var(--muted)}
+.room .name{font-size:20px;margin-top:8px}
 
 /* ===== MODAL ===== */
 .modal{
@@ -159,10 +126,7 @@ html,body{
   border-radius:24px;
   width:420px;
 }
-.modal h3{
-  margin-top:0;
-}
-.modal input, .modal select{
+.modal input,.modal select{
   width:100%;
   padding:14px;
   margin-top:12px;
@@ -172,12 +136,27 @@ html,body{
   color:white;
 }
 
-/* ===== SCROLLBAR ===== */
-::-webkit-scrollbar{width:8px}
-::-webkit-scrollbar-thumb{
-  background:#2a2f55;
-  border-radius:10px;
+/* ===== USERS ===== */
+.users{
+  margin-top:30px;
 }
+.user{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:6px;
+}
+.status{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+}
+.online{background:#3ba55d}
+.offline{background:#747f8d}
+
+/* ===== SCROLL ===== */
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-thumb{background:#2a2f55;border-radius:10px}
 </style>
 </head>
 
@@ -188,30 +167,31 @@ html,body{
   <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="logo">FASTMOST</div>
-    <button class="create-btn" onclick="openModal()">➕ Создать комнату</button>
+    <button class="btn" onclick="openModal()">➕ Создать комнату</button>
+    <button class="btn" onclick="location.href='profile.html'">👤 Личный кабинет</button>
+
+    <div class="users">
+      <b>Онлайн</b>
+      <div id="users"></div>
+    </div>
   </div>
 
   <!-- MAIN -->
   <div class="main">
-
-    <!-- HERO -->
     <div class="hero">
       <h1>Добро пожаловать в FASTMOST</h1>
       <p>Голосовые и текстовые комнаты нового поколения</p>
     </div>
 
-    <!-- VOICE -->
     <div class="section">
       <div class="section-title">🔊 Voice комнаты</div>
       <div class="rooms" id="voiceRooms"></div>
     </div>
 
-    <!-- CHAT -->
     <div class="section">
       <div class="section-title">💬 Текстовые комнаты</div>
       <div class="rooms" id="textRooms"></div>
     </div>
-
   </div>
 
 </div>
@@ -226,28 +206,66 @@ html,body{
       <option value="text">Текстовая</option>
     </select>
     <br><br>
-    <button class="create-btn" onclick="createRoom()">Создать</button>
+    <button class="btn" onclick="createRoom()">Создать</button>
   </div>
 </div>
 
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDatabase, ref, set, onDisconnect, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-const app = initializeApp({
+const firebaseConfig = {
   apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
   authDomain:"fastmost-f8084.firebaseapp.com",
-  projectId:"fastmost-f8084"
-});
+  projectId:"fastmost-f8084",
+  databaseURL:"https://fastmost-f8084-default-rtdb.firebaseio.com"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
+const rtdb = getDatabase(app);
 
-const modal = document.getElementById("modal");
+/* ===== ONLINE STATUS ===== */
+onAuthStateChanged(auth, user => {
+  if(!user) return;
+  const statusRef = ref(rtdb,"status/"+user.uid);
 
-window.openModal = () => modal.style.display="flex";
-modal.onclick = e => { if(e.target===modal) modal.style.display="none"; };
+  set(statusRef,{
+    email:user.email,
+    online:true,
+    lastSeen:Date.now()
+  });
 
-window.createRoom = async () => {
+  onDisconnect(statusRef).set({
+    email:user.email,
+    online:false,
+    lastSeen:Date.now()
+  });
+});
+
+/* ===== USERS LIST ===== */
+onValue(ref(rtdb,"status"), snap=>{
+  users.innerHTML="";
+  snap.forEach(u=>{
+    const d=u.val();
+    users.innerHTML+=`
+      <div class="user">
+        <span class="status ${d.online?'online':'offline'}"></span>
+        ${d.email}
+      </div>`;
+  });
+});
+
+/* ===== MODAL ===== */
+window.openModal=()=>modal.style.display="flex";
+modal.onclick=e=>{if(e.target===modal)modal.style.display="none"};
+
+/* ===== ROOMS ===== */
+window.createRoom = async ()=>{
   if(!roomName.value) return;
   await addDoc(collection(db,"rooms"),{
     name:roomName.value,
@@ -279,7 +297,7 @@ onSnapshot(collection(db,"rooms"),snap=>{
 
 <!-- SERVICE WORKER -->
 <script>
-if("serviceWorker" in navigator){
+if("serviceWorker"in navigator){
   navigator.serviceWorker.register("sw.js");
 }
 </script>
