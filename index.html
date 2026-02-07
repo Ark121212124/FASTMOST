@@ -1,111 +1,191 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>FASTMOST</title>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <style>
-body {
+:root{
+  --bg:#0b1020;
+  --panel:#12183a;
+  --panel-2:#161d4f;
+  --accent:#5865f2;
+  --text:#ffffff;
+  --muted:#9aa0d4;
+}
+
+*{box-sizing:border-box}
+html,body{
   margin:0;
-  background:#0b1020;
-  font-family:Arial;
-  color:#fff;
+  height:100%;
+  font-family:Inter,Arial,sans-serif;
+  background:radial-gradient(1200px 600px at top,var(--panel-2),var(--bg));
+  color:var(--text);
 }
-.wrapper {
-  padding:30px;
+
+.app{
+  display:flex;
+  height:100vh;
 }
-.box {
-  background:#141a33;
-  padding:20px;
-  border-radius:16px;
-  margin-bottom:20px;
+
+/* sidebar */
+.sidebar{
+  width:220px;
+  background:rgba(10,14,35,.9);
+  padding:16px;
 }
-input, button {
+
+.sidebar h2{
+  margin:0 0 20px;
+}
+
+.nav button{
   width:100%;
-  padding:12px;
+  margin-bottom:10px;
+  padding:10px;
   border:none;
   border-radius:10px;
-}
-button {
-  background:#5865f2;
+  background:rgba(255,255,255,.06);
   color:white;
   cursor:pointer;
-  margin-top:10px;
 }
-.room {
-  margin-top:10px;
+
+/* main */
+.main{
+  flex:1;
+  padding:24px;
+  overflow:auto;
+}
+
+.header{
+  background:linear-gradient(135deg,#5865f2,#7b83ff);
+  border-radius:18px;
+  padding:24px;
+  margin-bottom:20px;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+
+.card{
+  background:rgba(255,255,255,.06);
+  border-radius:16px;
+  padding:16px;
+}
+
+.card h3{
+  margin-top:0;
+}
+
+.input-row{
+  display:flex;
+  gap:10px;
+}
+
+.input-row input{
+  flex:1;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  background:rgba(255,255,255,.08);
+  color:white;
+}
+
+.input-row button{
+  padding:10px 16px;
+  border-radius:10px;
+  border:none;
+  background:var(--accent);
+  color:white;
+  cursor:pointer;
+}
+
+.list{
+  margin-top:14px;
+}
+
+.room{
+  padding:10px;
+  border-radius:10px;
+  background:rgba(255,255,255,.05);
+  margin-bottom:8px;
   cursor:pointer;
 }
 </style>
 </head>
 
 <body>
-<div class="wrapper">
+<div class="app">
 
-<h1>FASTMOST</h1>
+  <aside class="sidebar">
+    <h2>FASTMOST</h2>
+    <div class="nav">
+      <button>🏠 Главная</button>
+      <button>👤 Профиль</button>
+      <button>🛠 Админка</button>
+    </div>
+  </aside>
 
-<div class="box">
-<h3>Текстовая комната</h3>
-<input id="textName" placeholder="Название">
-<button onclick="createRoom('chat')">Создать</button>
-<div id="chatRooms"></div>
-</div>
+  <main class="main">
+    <div class="header">
+      <h1>FASTMOST</h1>
+      <p>Голосовые и текстовые комнаты нового поколения</p>
+    </div>
 
-<div class="box">
-<h3>Voice комната</h3>
-<input id="voiceName" placeholder="Название">
-<button onclick="createRoom('voice')">Создать</button>
-<div id="voiceRooms"></div>
-</div>
+    <div class="cards">
+
+      <!-- TEXT -->
+      <div class="card">
+        <h3>💬 Текстовые комнаты</h3>
+        <div class="input-row">
+          <input id="textName" placeholder="Название комнаты"/>
+          <button onclick="createText()">Создать</button>
+        </div>
+        <div id="textRooms" class="list"></div>
+      </div>
+
+      <!-- VOICE -->
+      <div class="card">
+        <h3>🎧 Voice-комнаты</h3>
+        <div class="input-row">
+          <input id="voiceName" placeholder="Название комнаты"/>
+          <button onclick="createVoice()">Создать</button>
+        </div>
+        <div id="voiceRooms" class="list"></div>
+      </div>
+
+    </div>
+  </main>
 
 </div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
-  authDomain: "fastmost-f8084.firebaseapp.com",
-  projectId: "fastmost-f8084"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-function createRoom(type) {
-  const name = type === 'chat'
-    ? textName.value
-    : voiceName.value;
-
-  if(!name) return alert("Введите название");
-
-  db.collection("rooms").add({
-    name,
-    type,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
+function createText(){
+  const name=document.getElementById('textName').value.trim();
+  if(!name)return;
+  const div=document.createElement('div');
+  div.className='room';
+  div.textContent='# '+name;
+  div.onclick=()=>location.href='chat.html?room='+encodeURIComponent(name);
+  document.getElementById('textRooms').appendChild(div);
+  document.getElementById('textName').value='';
 }
 
-db.collection("rooms").onSnapshot(snap=>{
-  chatRooms.innerHTML = "";
-  voiceRooms.innerHTML = "";
-
-  snap.forEach(doc=>{
-    const r = doc.data();
-    const div = document.createElement("div");
-    div.className = "room";
-    div.textContent = "# " + r.name;
-
-    if(r.type === "chat"){
-      div.onclick = ()=>location.href=`chat.html?room=${doc.id}`;
-      chatRooms.appendChild(div);
-    } else {
-      div.onclick = ()=>location.href=`voice.html?room=${doc.id}`;
-      voiceRooms.appendChild(div);
-    }
-  });
-});
+function createVoice(){
+  const name=document.getElementById('voiceName').value.trim();
+  if(!name)return;
+  const div=document.createElement('div');
+  div.className='room';
+  div.textContent='🔊 '+name;
+  document.getElementById('voiceRooms').appendChild(div);
+  document.getElementById('voiceName').value='';
+}
 </script>
+
 </body>
 </html>
 
