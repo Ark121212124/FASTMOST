@@ -4,141 +4,98 @@
 <meta charset="UTF-8">
 <title>FASTMOST</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5865f2">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
 <style>
+:root{
+  --bg:#0b0e14;
+  --panel:#141827cc;
+  --panel-solid:#141827;
+  --accent:#5865f2;
+  --text:#e6e8f0;
+  --muted:#8b90b3;
+}
 *{box-sizing:border-box}
 html,body{
   margin:0;
   height:100%;
   font-family:Inter,system-ui;
-  background:#0b0e14;
-  color:#fff;
+  background:radial-gradient(circle at top,#1b1f3b,#0b0e14);
+  color:var(--text);
 }
 .app{
-  display:grid;
-  grid-template-columns:80px 260px 1fr 240px;
+  display:flex;
   height:100vh;
 }
 
-/* LEFT ICON BAR */
-.nav{
-  background:#0d111c;
+/* SIDEBAR */
+.sidebar{
+  width:260px;
+  background:var(--panel);
+  backdrop-filter:blur(18px);
+  padding:20px;
   display:flex;
   flex-direction:column;
-  align-items:center;
-  padding:12px 0;
+  gap:14px;
 }
-.nav .logo{
-  width:44px;height:44px;
+.logo{
+  font-size:22px;
+  font-weight:800;
+}
+.btn{
+  background:var(--accent);
+  border:none;
+  padding:14px;
   border-radius:14px;
-  background:#5865f2;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:700;
-}
-
-/* ROOMS */
-.rooms{
-  background:#11162a;
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-}
-.rooms h3{
-  margin:0 0 10px;
-  opacity:.7;
-}
-.rooms input{
-  background:#0b0f1f;
-  border:none;
-  border-radius:10px;
-  padding:10px;
   color:white;
-}
-.rooms button{
-  margin-top:8px;
-  background:#5865f2;
-  border:none;
-  padding:10px;
-  border-radius:10px;
-  color:white;
+  font-weight:600;
   cursor:pointer;
 }
-.room{
-  padding:10px;
-  border-radius:10px;
-  margin-top:6px;
-  cursor:pointer;
+.btn.secondary{
+  background:#2a2f55;
 }
-.room:hover{background:#1a2040}
+.btn:hover{filter:brightness(1.1)}
 
-/* CHAT */
-.chat{
-  display:flex;
-  flex-direction:column;
-  background:linear-gradient(180deg,#0f1426,#0b0e14);
-}
-.chat-header{
-  padding:14px;
-  background:#12183a;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.messages{
+/* MAIN */
+.main{
   flex:1;
-  padding:16px;
-  overflow-y:auto;
+  padding:40px;
+  overflow:auto;
 }
-.msg{
-  margin-bottom:10px;
+.hero{
+  background:linear-gradient(135deg,#5865f2,#3b45a5);
+  border-radius:26px;
+  padding:40px;
+  margin-bottom:30px;
 }
-.msg span{
-  opacity:.6;
-  font-size:12px;
-}
-.chat-input{
-  display:flex;
-  gap:10px;
-  padding:12px;
-  background:#0e1328;
-}
-.chat-input input{
-  flex:1;
-  padding:12px;
-  border:none;
-  border-radius:12px;
-  background:#0b0f1f;
-  color:white;
-}
-.chat-input button{
-  width:44px;
-  border:none;
-  border-radius:12px;
-  background:#5865f2;
-  cursor:pointer;
-}
+.hero h1{margin:0;font-size:36px}
+.hero p{opacity:.9}
 
-/* USERS */
-.users{
-  background:#0d111c;
-  padding:14px;
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:18px;
 }
-.user{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-bottom:8px;
+.card{
+  background:var(--panel);
+  backdrop-filter:blur(14px);
+  padding:20px;
+  border-radius:20px;
+  cursor:pointer;
+  transition:.25s;
 }
-.dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#3ba55d;
+.card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
 }
+.type{font-size:13px;color:var(--muted)}
+.name{font-size:20px;margin-top:6px}
+
+/* ADMIN BTN */
+#adminBtn{display:none}
 </style>
 </head>
 
@@ -146,144 +103,64 @@ html,body{
 
 <div class="app">
 
-  <!-- ICON BAR -->
-  <div class="nav">
-    <div class="logo">FM</div>
+  <div class="sidebar">
+    <div class="logo">FASTMOST</div>
+
+    <button class="btn" onclick="location.href='voice-lobby.html'">🎙 Voice</button>
+    <button class="btn secondary" onclick="location.href='profile.html'">👤 Профиль</button>
+    <button class="btn secondary" id="adminBtn" onclick="location.href='admin.html'">🛠 Админка</button>
   </div>
 
-  <!-- ROOMS -->
-  <div class="rooms">
-    <h3>Комнаты</h3>
-    <input id="roomName" placeholder="Новая комната">
-    <button onclick="createRoom()">Создать</button>
-    <div id="roomList"></div>
-  </div>
-
-  <!-- CHAT -->
-  <div class="chat">
-    <div class="chat-header">
-      <b id="roomTitle">Выберите комнату</b>
-      <button onclick="joinVoice()">🎙 Voice</button>
+  <div class="main">
+    <div class="hero">
+      <h1>FASTMOST</h1>
+      <p>Голосовые и текстовые комнаты нового поколения</p>
     </div>
-    <div class="messages" id="messages"></div>
-    <div class="chat-input">
-      <input id="msgInput" placeholder="Сообщение...">
-      <button onclick="sendMessage()">➤</button>
-    </div>
-  </div>
 
-  <!-- USERS -->
-  <div class="users">
-    <h3>Онлайн</h3>
-    <div id="userList"></div>
+    <h3>💬 Текстовые комнаты</h3>
+    <div class="grid" id="rooms"></div>
   </div>
 
 </div>
 
-<!-- FIREBASE -->
 <script type="module">
-import { initializeApp } from
-"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore,collection,onSnapshot,doc,getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import { getAuth, onAuthStateChanged }
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+const app=initializeApp({
+  apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
+  authDomain:"fastmost-f8084.firebaseapp.com",
+  projectId:"fastmost-f8084"
+});
+const auth=getAuth();
+const db=getFirestore();
 
-import {
-  getFirestore, collection, addDoc,
-  onSnapshot, query, orderBy, serverTimestamp
-}
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
-  authDomain: "fastmost-f8084.firebaseapp.com",
-  projectId: "fastmost-f8084"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth();
-const db = getFirestore();
-
-let currentRoom = null;
-let userEmail = "";
-
-onAuthStateChanged(auth,user=>{
-  if(!user) location.href="login.html";
-  userEmail = user.email;
-  loadRooms();
-  loadUsers();
+onAuthStateChanged(auth,async user=>{
+  if(!user) return;
+  const snap=await getDoc(doc(db,"users",user.uid));
+  if(snap.exists() && snap.data().role==="admin"){
+    adminBtn.style.display="block";
+  }
 });
 
-function loadRooms(){
-  onSnapshot(collection(db,"rooms"),snap=>{
-    roomList.innerHTML="";
-    snap.forEach(doc=>{
-      const d = doc.data();
-      const div = document.createElement("div");
-      div.className="room";
-      div.textContent="# "+d.name;
-      div.onclick=()=>openRoom(doc.id,d.name);
-      roomList.appendChild(div);
-    });
+onSnapshot(collection(db,"rooms"),snap=>{
+  rooms.innerHTML="";
+  snap.forEach(d=>{
+    const r=d.data();
+    const el=document.createElement("div");
+    el.className="card";
+    el.innerHTML=`<div class="type">💬 Text</div><div class="name">${r.name}</div>`;
+    el.onclick=()=>location.href=`chat.html?room=${d.id}`;
+    rooms.appendChild(el);
   });
+});
+</script>
+
+<script>
+if("serviceWorker"in navigator){
+  navigator.serviceWorker.register("service-worker.js");
 }
-
-window.createRoom = async ()=>{
-  if(!roomName.value) return;
-  await addDoc(collection(db,"rooms"),{
-    name:roomName.value,
-    createdAt:serverTimestamp()
-  });
-  roomName.value="";
-};
-
-function openRoom(id,name){
-  currentRoom=id;
-  roomTitle.textContent="# "+name;
-  messages.innerHTML="";
-  onSnapshot(
-    query(collection(db,"rooms",id,"messages"),orderBy("time")),
-    snap=>{
-      messages.innerHTML="";
-      snap.forEach(doc=>{
-        const m = doc.data();
-        const div=document.createElement("div");
-        div.className="msg";
-        div.innerHTML=`<span>${m.user}</span><br>${m.text}`;
-        messages.appendChild(div);
-      });
-      messages.scrollTop=99999;
-    }
-  );
-}
-
-window.sendMessage = async ()=>{
-  if(!msgInput.value || !currentRoom) return;
-  await addDoc(collection(db,"rooms",currentRoom,"messages"),{
-    text:msgInput.value,
-    user:userEmail,
-    time:serverTimestamp()
-  });
-  msgInput.value="";
-};
-
-function loadUsers(){
-  onSnapshot(collection(db,"users"),snap=>{
-    userList.innerHTML="";
-    snap.forEach(doc=>{
-      const u=doc.data();
-      const div=document.createElement("div");
-      div.className="user";
-      div.innerHTML=`<div class="dot"></div>${u.email}`;
-      userList.appendChild(div);
-    });
-  });
-}
-
-window.joinVoice = ()=>{
-  if(!currentRoom) return;
-  location.href="voice.html?room="+currentRoom;
-};
 </script>
 
 </body>
