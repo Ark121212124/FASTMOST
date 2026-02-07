@@ -5,25 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FASTMOST</title>
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#5865f2">
-
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
 <style>
-/* ================= THEMES ================= */
-body[data-theme="purple"]{--accent:#5865f2;--bg:#070b16}
-body[data-theme="cyber"]{--accent:#00ffe1;--bg:#020d0c}
-body[data-theme="red"]{--accent:#ff3b3b;--bg:#120405}
-
 :root{
-  --panel:rgba(20,25,45,.65);
+  --accent:#5865f2;
+  --bg:#070b16;
+  --panel:rgba(20,25,45,.75);
   --text:#e6e9ff;
-  --blur:blur(16px);
+  --blur:blur(14px);
 }
 
 *{box-sizing:border-box}
@@ -32,205 +25,169 @@ body{
   height:100vh;
   font-family:Inter,system-ui;
   background:
-    radial-gradient(1200px 600px at top,var(--accent)12%,transparent),
+    radial-gradient(1200px 600px at top,var(--accent)15%,transparent),
     var(--bg);
   color:var(--text);
-  display:flex;
 }
 
-/* ================= SIDEBAR ================= */
-aside{
-  width:260px;
+/* ===== LAYOUT ===== */
+.app{
+  display:grid;
+  grid-template-columns:240px 1fr;
+  height:100vh;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  padding:20px;
   background:var(--panel);
   backdrop-filter:var(--blur);
-  padding:16px;
   display:flex;
   flex-direction:column;
-  gap:12px;
+  gap:14px;
 }
 
-.logo{
-  font-size:20px;
-  font-weight:700;
-  color:var(--accent);
+.sidebar h2{
+  margin:0 0 10px;
 }
 
-.nav button{
-  width:100%;
-  padding:10px;
+.sidebar button{
+  background:#1e2345;
   border:none;
-  border-radius:12px;
-  background:rgba(255,255,255,.05);
-  color:var(--text);
+  color:#fff;
+  padding:10px;
+  border-radius:10px;
   cursor:pointer;
 }
-.nav button:hover{background:rgba(255,255,255,.1)}
 
-.themeBtn{
-  margin-top:auto;
-  background:var(--accent);
-  color:#fff;
-}
-
-/* ================= MAIN ================= */
-main{
-  flex:1;
+/* ===== MAIN ===== */
+.main{
   padding:24px;
-  overflow:hidden;
   display:flex;
   flex-direction:column;
+  gap:20px;
 }
 
 .hero{
-  background:linear-gradient(135deg,var(--accent),transparent);
-  border-radius:20px;
   padding:24px;
-  margin-bottom:20px;
+  border-radius:18px;
+  background:linear-gradient(135deg,#5865f2,#7b7fff);
 }
 
-.hero h1{margin:0}
-.hero p{opacity:.8}
-
-/* ================= LOBBY ================= */
-.lobby{
-  flex:1;
+.rooms{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:20px;
-  overflow:hidden;
 }
 
 .panel{
   background:var(--panel);
   backdrop-filter:var(--blur);
   border-radius:18px;
-  padding:16px;
+  padding:18px;
   display:flex;
   flex-direction:column;
+  gap:12px;
 }
 
-.panel h3{
-  margin:0 0 10px;
-  font-size:16px;
+.panel input{
+  background:#0f1430;
+  border:none;
+  padding:10px;
+  border-radius:10px;
+  color:#fff;
 }
 
-/* ================= ROOMS ================= */
-.rooms{
-  flex:1;
-  overflow-y:auto;
+.panel button{
+  background:var(--accent);
+  border:none;
+  padding:10px;
+  border-radius:10px;
+  color:#fff;
+  cursor:pointer;
+}
+
+.list{
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:8px;
 }
 
 .room{
   padding:10px;
-  border-radius:12px;
-  background:rgba(255,255,255,.05);
-  cursor:pointer;
-}
-.room:hover{background:rgba(255,255,255,.1)}
-
-.create{
-  display:flex;
-  gap:8px;
-  margin-bottom:10px;
-}
-
-.create input{
-  flex:1;
-  padding:8px;
   border-radius:10px;
-  border:none;
-  background:rgba(0,0,0,.3);
-  color:#fff;
-}
-
-.create button{
-  background:var(--accent);
-  border:none;
-  padding:8px 12px;
-  border-radius:10px;
-  color:#fff;
+  background:#141a3a;
   cursor:pointer;
 }
 </style>
 </head>
 
-<body data-theme="purple">
+<body>
 
-<!-- ================= SIDEBAR ================= -->
-<aside>
-  <div class="logo">FASTMOST</div>
+<div class="app">
 
-  <div class="nav">
-    <button onclick="location.reload()">🏠 Главная</button>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <h2>FASTMOST</h2>
+    <button onclick="location.href='index.html'">🏠 Главная</button>
     <button onclick="location.href='profile.html'">👤 Профиль</button>
     <button onclick="location.href='admin.html'">🛠 Админка</button>
-  </div>
+  </aside>
 
-  <button class="themeBtn" onclick="switchTheme()">🎨 Сменить тему</button>
-</aside>
+  <!-- MAIN -->
+  <main class="main">
 
-<!-- ================= MAIN ================= -->
-<main>
-  <div class="hero">
-    <h1>FASTMOST</h1>
-    <p>Голосовые и текстовые комнаты нового поколения</p>
-  </div>
+    <div class="hero">
+      <h1>FASTMOST</h1>
+      <p>Голосовые и текстовые комнаты нового поколения</p>
+    </div>
 
-  <div class="lobby">
+    <div class="rooms">
 
-    <!-- TEXT ROOMS -->
-    <div class="panel">
-      <h3>💬 Текстовые комнаты</h3>
-      <div class="create">
+      <!-- TEXT ROOMS -->
+      <div class="panel">
+        <h3>💬 Текстовые комнаты</h3>
         <input id="textName" placeholder="Название комнаты">
-        <button onclick="createRoom('text')">Создать</button>
+        <button onclick="createTextRoom()">Создать</button>
+        <div id="textRooms" class="list"></div>
       </div>
-      <div class="rooms" id="textRooms"></div>
-    </div>
 
-    <!-- VOICE ROOMS -->
-    <div class="panel">
-      <h3>🎧 Voice-комнаты</h3>
-      <div class="create">
+      <!-- VOICE ROOMS -->
+      <div class="panel">
+        <h3>🎧 Voice-комнаты</h3>
         <input id="voiceName" placeholder="Название комнаты">
-        <button onclick="createRoom('voice')">Создать</button>
+        <button onclick="createVoiceRoom()">Создать</button>
+        <div id="voiceRooms" class="list"></div>
       </div>
-      <div class="rooms" id="voiceRooms"></div>
+
     </div>
 
-  </div>
-</main>
+  </main>
+</div>
 
 <script>
-/* ================= FIREBASE ================= */
+/* ===== FIREBASE ===== */
 firebase.initializeApp({
-  // 🔥 ВСТАВЬ СВОЙ CONFIG
+  apiKey: "ВАШ_API_KEY",
+  authDomain: "fastmost-8084.firebaseapp.com",
+  projectId: "fastmost-8084"
 });
 const db = firebase.firestore();
 
-/* ================= THEME ================= */
-const themes=["purple","cyber","red"];
-let t=0;
-function switchTheme(){
-  t=(t+1)%themes.length;
-  document.body.dataset.theme=themes[t];
+/* ===== CREATE ROOMS ===== */
+function createTextRoom(){
+  const name=document.getElementById("textName").value.trim();
+  if(!name) return;
+  db.collection("rooms").add({name,type:"text"});
 }
 
-/* ================= ROOMS ================= */
-function createRoom(type){
-  const input = type==="text"?textName:voiceName;
-  if(!input.value) return;
-  db.collection("rooms").add({
-    name:input.value,
-    type:type,
-    created:Date.now()
-  });
-  input.value="";
+function createVoiceRoom(){
+  const name=document.getElementById("voiceName").value.trim();
+  if(!name) return;
+  db.collection("rooms").add({name,type:"voice"});
 }
 
+/* ===== LOAD ROOMS ===== */
 db.collection("rooms").onSnapshot(s=>{
   textRooms.innerHTML="";
   voiceRooms.innerHTML="";
@@ -239,12 +196,10 @@ db.collection("rooms").onSnapshot(s=>{
     const el=document.createElement("div");
     el.className="room";
     el.textContent="# "+r.name;
-    el.onclick=()=>{
-      if(r.type==="text")
-        location.href=`chat.html?room=${d.id}`;
-      else
-        location.href=`voice.html?room=${d.id}`;
-    };
+    el.onclick=()=>location.href=
+      r.type==="text"
+        ?`chat.html?room=${d.id}`
+        :`voice.html?room=${d.id}`;
     (r.type==="text"?textRooms:voiceRooms).appendChild(el);
   });
 });
