@@ -2,79 +2,130 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Chat</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASTMOST · Chat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- ВНЕШНИЕ СТИЛИ -->
 <link rel="stylesheet" href="styles.css">
+
+<!-- Emoji Picker -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 </head>
-<body style="display:flex;flex-direction:column;height:100vh">
 
-<div class="chat-header">
-  <button onclick="history.back()">← Назад</button>
-  FASTMOST · Chat
-</div>
+<body>
 
-<div id="messages" class="chat-body"></div>
+<!-- HEADER -->
+<header class="chat-header">
+  <button class="back-btn" onclick="history.back()">← Назад</button>
+  <span class="chat-title">FASTMOST · Chat</span>
+</header>
 
-<div id="gifs" class="gif-panel"></div>
+<!-- CHAT -->
+<main id="messages" class="chat-messages"></main>
 
-<div class="chat-footer">
-  <button onclick="addEmoji()">😊</button>
-  <button onclick="toggleGif()">GIF</button>
-  <input id="text" placeholder="Сообщение…">
-  <button onclick="send()">➤</button>
+<!-- FOOTER -->
+<footer class="chat-input">
+  <button id="emojiBtn" class="icon-btn">😊</button>
+  <button id="gifBtn" class="icon-btn">GIF</button>
+  <input id="text" type="text" placeholder="Сообщение…">
+  <button id="sendBtn" class="send-btn">➤</button>
+</footer>
+
+<!-- EMOJI PICKER -->
+<emoji-picker id="emojiPicker" class="emoji-picker"></emoji-picker>
+
+<!-- GIF PANEL -->
+<div id="gifPanel" class="gif-panel">
+  <img src="https://media.giphy.com/media/l0MYC0LajbaPoEADu/giphy.gif">
+  <img src="https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif">
+  <img src="https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif">
+  <img src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif">
 </div>
 
 <script>
-const room=new URLSearchParams(location.search).get('room');
-const key='chat_'+room;
-const msgs=JSON.parse(localStorage.getItem(key)||'[]');
+/* ---------- CONFIG ---------- */
+const room =
+  new URLSearchParams(location.search).get('room') || 'default';
+const STORAGE_KEY = 'fastmost_chat_' + room;
 
-function save(){localStorage.setItem(key,JSON.stringify(msgs));}
+/* ---------- ELEMENTS ---------- */
+const messages = document.getElementById('messages');
+const text = document.getElementById('text');
+const sendBtn = document.getElementById('sendBtn');
+const emojiBtn = document.getElementById('emojiBtn');
+const gifBtn = document.getElementById('gifBtn');
+const emojiPicker = document.getElementById('emojiPicker');
+const gifPanel = document.getElementById('gifPanel');
 
-function render(){
-  messages.innerHTML='';
-  msgs.forEach(m=>{
-    const d=document.createElement('div');
-    d.className='message me';
-    d.innerHTML=m;
-    messages.appendChild(d);
-  });
-  messages.scrollTop=99999;
+/* ---------- LOAD ---------- */
+const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+saved.forEach(renderMessage);
+
+/* ---------- SEND TEXT ---------- */
+sendBtn.onclick = send;
+text.addEventListener('keydown', e => {
+  if (e.key === 'Enter') send();
+});
+
+function send() {
+  if (!text.value.trim()) return;
+
+  const msg = { type: 'text', value: text.value };
+  save(msg);
+  renderMessage(msg);
+  text.value = '';
 }
-render();
 
-function send(){
-  if(!text.value.trim())return;
-  msgs.push(text.value);
-  text.value='';
-  save();render();
+/* ---------- SAVE ---------- */
+function save(msg) {
+  const arr = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  arr.push(msg);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
 }
 
-function addEmoji(){
-  text.value+='😊';
+/* ---------- RENDER ---------- */
+function renderMessage(msg) {
+  const div = document.createElement('div');
+  div.className = 'message';
+
+  if (msg.type === 'gif') {
+    const img = document.createElement('img');
+    img.src = msg.value;
+    img.className = 'gif-message';
+    div.appendChild(img);
+  } else {
+    div.textContent = msg.value;
+  }
+
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+/* ---------- EMOJI ---------- */
+emojiBtn.onclick = () => {
+  emojiPicker.classList.toggle('show');
+  gifPanel.classList.remove('show');
+};
+
+emojiPicker.addEventListener('emoji-click', e => {
+  text.value += e.detail.unicode;
   text.focus();
-}
+});
 
-const gifList=[
- 'https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif',
- 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
- 'https://media.giphy.com/media/26BRuo6sLetdllPAQ/giphy.gif'
-];
+/* ---------- GIF ---------- */
+gifBtn.onclick = () => {
+  gifPanel.classList.toggle('show');
+  emojiPicker.classList.remove('show');
+};
 
-function toggleGif(){
-  gifs.innerHTML='';
-  gifList.forEach(url=>{
-    const img=document.createElement('img');
-    img.src=url;
-    img.onclick=()=>{
-      msgs.push(`<img src="${url}" style="max-width:220px;border-radius:14px">`);
-      save();render();
-      gifs.style.display='none';
-    };
-    gifs.appendChild(img);
-  });
-  gifs.style.display=gifs.style.display==='flex'?'none':'flex';
-}
+gifPanel.querySelectorAll('img').forEach(img => {
+  img.onclick = () => {
+    const msg = { type: 'gif', value: img.src };
+    save(msg);
+    renderMessage(msg);
+    gifPanel.classList.remove('show');
+  };
+});
 </script>
 
 </body>
