@@ -4,169 +4,182 @@
 <meta charset="UTF-8">
 <title>FASTMOST</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://meet.jit.si/external_api.js"></script>
+
+<!-- Firebase (ES modules) -->
+<script type="module">
+/* ===== IMPORTS ===== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  onAuthStateChanged,
+  signOut,
+  updateProfile
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+/* ===== FIREBASE CONFIG (ТВОИ КЛЮЧИ) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
+  authDomain: "fastmost-f8084.firebaseapp.com",
+  projectId: "fastmost-f8084",
+  storageBucket: "fastmost-f8084.firebasestorage.app",
+  messagingSenderId: "153310068244",
+  appId: "1:153310068244:web:f0cce97ba520da38dc3101",
+  measurementId: "G-QJFEKWN6HS"
+};
+
+/* ===== INIT ===== */
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const storage = getStorage(app);
+
+/* ===== ELEMENTS ===== */
+const authBox = document.getElementById("auth");
+const appBox = document.getElementById("app");
+const emailInput = document.getElementById("email");
+const passInput = document.getElementById("password");
+const userEmail = document.getElementById("userEmail");
+const avatarImg = document.getElementById("avatar");
+
+/* ===== AUTH LOGIC ===== */
+window.register = async () => {
+  const email = emailInput.value.trim();
+  const pass = passInput.value.trim();
+
+  if (!email || !pass) {
+    alert("Введите email и пароль");
+    return;
+  }
+
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await sendEmailVerification(cred.user);
+    alert("Письмо подтверждения отправлено на почту");
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+window.login = async () => {
+  try {
+    await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+window.logout = async () => {
+  await signOut(auth);
+  location.reload();
+};
+
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    authBox.style.display = "flex";
+    appBox.style.display = "none";
+    return;
+  }
+
+  if (!user.emailVerified) {
+    alert("Подтвердите email, затем обновите страницу");
+    return;
+  }
+
+  authBox.style.display = "none";
+  appBox.style.display = "block";
+  userEmail.innerText = user.email;
+
+  if (user.photoURL) {
+    avatarImg.src = user.photoURL;
+  }
+});
+
+/* ===== AVATAR UPLOAD ===== */
+window.uploadAvatar = async file => {
+  if (!file) return;
+
+  const user = auth.currentUser;
+  const avatarRef = ref(storage, "avatars/" + user.uid);
+
+  await uploadBytes(avatarRef, file);
+  const url = await getDownloadURL(avatarRef);
+
+  await updateProfile(user, { photoURL: url });
+  avatarImg.src = url;
+};
+</script>
 
 <style>
-:root{
- --bg:#0a0c10;
- --panel:#141824;
- --card:#1b2033;
- --accent:#5b6cff;
- --text:#ffffff;
- --muted:#9aa1b2;
- --border:#242a44;
-}
-
-*{box-sizing:border-box;font-family:Inter,Segoe UI,Arial}
-
 body{
- margin:0;
- background:var(--bg);
- color:var(--text);
- height:100vh;
- overflow:hidden;
+  margin:0;
+  background:#0b0e14;
+  color:#fff;
+  font-family:Inter,Segoe UI,Arial;
 }
 
-/* ===== AUTH ===== */
-#auth{
- height:100vh;
- display:flex;
- align-items:center;
- justify-content:center;
- animation:fade .6s ease;
+#auth, #app{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-.auth-card{
- background:var(--panel);
- padding:36px;
- border-radius:18px;
- width:100%;
- max-width:360px;
- box-shadow:0 20px 60px rgba(0,0,0,.6);
- text-align:center;
+.card{
+  background:#141827;
+  padding:32px;
+  border-radius:18px;
+  width:100%;
+  max-width:360px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);
+  text-align:center;
 }
 
 .brand{
- font-size:30px;
- font-weight:800;
- color:var(--accent);
- letter-spacing:1px;
- margin-bottom:10px;
+  font-size:32px;
+  font-weight:900;
+  color:#6b7cff;
 }
 
-.auth-card p{
- color:var(--muted);
- font-size:14px;
+input{
+  width:100%;
+  padding:14px;
+  margin-top:14px;
+  border-radius:12px;
+  border:1px solid #242a45;
+  background:#0f1324;
+  color:white;
 }
 
-.auth-card input{
- width:100%;
- padding:14px;
- margin-top:14px;
- border-radius:12px;
- border:1px solid var(--border);
- background:#0f1322;
- color:white;
- outline:none;
- transition:.2s;
+button{
+  width:100%;
+  padding:14px;
+  margin-top:16px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#6b7cff,#8b98ff);
+  color:white;
+  cursor:pointer;
 }
 
-.auth-card input:focus{
- border-color:var(--accent);
+.profile{
+  text-align:center;
 }
 
-.auth-card button{
- width:100%;
- padding:14px;
- margin-top:20px;
- border:none;
- border-radius:12px;
- background:linear-gradient(135deg,var(--accent),#7a88ff);
- color:white;
- font-size:16px;
- cursor:pointer;
- transition:.2s;
-}
-
-.auth-card button:hover{
- transform:translateY(-1px);
-}
-
-/* ===== APP ===== */
-#app{display:none;height:100vh}
-
-.layout{
- display:flex;
- height:100%;
-}
-
-/* SIDEBAR */
-.sidebar{
- width:260px;
- background:var(--panel);
- border-right:1px solid var(--border);
- padding:20px;
- display:flex;
- flex-direction:column;
-}
-
-.sidebar h2{
- margin:0 0 15px;
- color:var(--accent);
-}
-
-.sidebar input{
- padding:12px;
- margin-bottom:10px;
- border-radius:10px;
- border:1px solid var(--border);
- background:#0f1322;
- color:white;
-}
-
-.sidebar button{
- padding:12px;
- border:none;
- border-radius:10px;
- background:var(--accent);
- color:white;
- cursor:pointer;
- margin-bottom:8px;
-}
-
-/* MAIN */
-.main{
- flex:1;
- display:flex;
- flex-direction:column;
-}
-
-.header{
- padding:14px 20px;
- background:var(--panel);
- border-bottom:1px solid var(--border);
- display:flex;
- justify-content:space-between;
- align-items:center;
-}
-
-.participants{
- font-size:14px;
- color:var(--muted);
-}
-
-#jitsi{flex:1}
-
-/* MOBILE */
-@media(max-width:800px){
- .sidebar{width:100%;height:auto;flex-direction:row;gap:6px}
- .layout{flex-direction:column}
-}
-
-/* ANIMATIONS */
-@keyframes fade{
- from{opacity:0;transform:scale(.96)}
- to{opacity:1}
+.profile img{
+  width:96px;
+  height:96px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid #6b7cff;
 }
 </style>
 </head>
@@ -175,86 +188,25 @@ body{
 
 <!-- AUTH -->
 <div id="auth">
- <div class="auth-card">
-  <div class="brand">FASTMOST</div>
-  <p>Вход только по электронной почте</p>
-  <input id="email" placeholder="email@example.com">
-  <button onclick="auth()">Продолжить</button>
- </div>
+  <div class="card">
+    <div class="brand">FASTMOST</div>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Пароль">
+    <button onclick="register()">Регистрация</button>
+    <button onclick="login()">Войти</button>
+  </div>
 </div>
 
 <!-- APP -->
-<div id="app">
- <div class="layout">
-  <div class="sidebar">
-   <h2>Комнаты</h2>
-   <input id="room" placeholder="Название комнаты">
-   <input id="pass" placeholder="Пароль комнаты">
-   <button onclick="join()">Войти</button>
-   <button onclick="create()">Создать</button>
+<div id="app" style="display:none">
+  <div class="card profile">
+    <div class="brand">FASTMOST</div>
+    <img id="avatar" src="">
+    <input type="file" accept="image/*" onchange="uploadAvatar(this.files[0])">
+    <p id="userEmail"></p>
+    <button onclick="logout()">Выйти</button>
   </div>
-
-  <div class="main">
-   <div class="header">
-    <div id="roomTitle">Не подключено</div>
-    <div class="participants" id="users">Участники: 0</div>
-   </div>
-   <div id="jitsi"></div>
-  </div>
- </div>
 </div>
-
-<script>
-let api;
-let email;
-let currentRoom;
-
-function auth(){
- email=document.getElementById("email").value.trim();
- const re=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
- if(!re.test(email)) return alert("Введите корректный email");
- document.getElementById("auth").style.display="none";
- document.getElementById("app").style.display="block";
-}
-
-function create(){
- const r="fastmost-"+Math.random().toString(36).slice(2,8);
- joinRoom(r);
-}
-
-function join(){
- const r=document.getElementById("room").value.trim();
- const p=document.getElementById("pass").value.trim();
- if(!r||!p) return alert("Комната и пароль обязательны");
- joinRoom(r+"-"+btoa(p));
-}
-
-function joinRoom(room){
- currentRoom=room;
- document.getElementById("roomTitle").innerText="Комната: "+room;
- if(api) api.dispose();
-
- api=new JitsiMeetExternalAPI("meet.jit.si",{
-  roomName:room,
-  parentNode:document.getElementById("jitsi"),
-  userInfo:{displayName:email},
-  configOverwrite:{
-   startWithVideoMuted:true,
-   prejoinPageEnabled:false
-  }
- });
-
- api.addListener("participantJoined",update);
- api.addListener("participantLeft",update);
- update();
-}
-
-function update(){
- api.getParticipantsInfo().then(p=>{
-  document.getElementById("users").innerText="Участники: "+p.length;
- });
-}
-</script>
 
 </body>
 </html>
