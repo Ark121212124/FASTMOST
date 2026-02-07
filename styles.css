@@ -1,12 +1,19 @@
 :root{
-  --bg-main:#070b1a;
-  --bg-panel:#0f1633;
-  --bg-panel-2:#141d42;
+  --bg-main:#050711;
+  --bg-panel:#0d1433;
+  --bg-panel-2:#121a44;
+  --bg-panel-3:#0a102a;
+
   --accent:#6c7cff;
-  --accent-hover:#8290ff;
-  --text:#e6e9ff;
-  --muted:#aab0ff;
+  --accent-hover:#8896ff;
+
+  --text:#e8ebff;
+  --muted:#9aa3ff;
+
   --radius:18px;
+  --radius-sm:14px;
+
+  --blur:blur(12px);
 }
 
 /* RESET */
@@ -19,37 +26,53 @@
 
 body{
   background:
-    radial-gradient(1200px 600px at top,#182061,#050710);
+    radial-gradient(1200px 700px at top,#1a2260 0%,#04050c 60%);
   color:var(--text);
   min-height:100vh;
+  overflow:hidden;
 }
 
-/* LAYOUT */
+/* LINKS */
+a{
+  color:inherit;
+  text-decoration:none;
+}
+
+/* =========================
+   LAYOUT
+========================= */
 .page{
   padding:24px;
 }
 
 .header{
-  font-size:28px;
+  font-size:26px;
   font-weight:700;
-  margin-bottom:24px;
+  margin-bottom:20px;
 }
 
-/* PANELS */
+/* =========================
+   PANELS
+========================= */
 .panel{
-  background:linear-gradient(180deg,var(--bg-panel),var(--bg-main));
+  background:
+    linear-gradient(180deg,var(--bg-panel),var(--bg-main));
   border-radius:var(--radius);
-  padding:20px;
-  margin-bottom:24px;
+  padding:18px;
+  margin-bottom:22px;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.45);
 }
 
-/* TITLES */
 .panel h2{
-  font-size:18px;
+  font-size:17px;
   margin-bottom:12px;
+  color:#fff;
 }
 
-/* INPUTS */
+/* =========================
+   INPUTS
+========================= */
 .input-row{
   display:flex;
   gap:10px;
@@ -57,63 +80,98 @@ body{
 
 input{
   flex:1;
-  background:#0b1230;
-  border:none;
-  border-radius:14px;
+  background:var(--bg-panel-3);
+  border:1px solid rgba(255,255,255,.04);
+  border-radius:var(--radius-sm);
   padding:12px 14px;
   color:#fff;
   font-size:14px;
+  outline:none;
+}
+
+input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px rgba(108,124,255,.25);
 }
 
 input::placeholder{
   color:var(--muted);
 }
 
-/* BUTTONS */
+/* =========================
+   BUTTONS
+========================= */
 button{
-  background:var(--accent);
+  background:linear-gradient(180deg,var(--accent),#5868ff);
   border:none;
-  border-radius:14px;
+  border-radius:var(--radius-sm);
   padding:12px 18px;
   color:#fff;
   font-weight:600;
   cursor:pointer;
+  transition:.2s ease;
 }
 
 button:hover{
-  background:var(--accent-hover);
+  background:linear-gradient(180deg,var(--accent-hover),#6c7cff);
+  transform:translateY(-1px);
 }
 
-/* ROOM LIST */
+button:active{
+  transform:translateY(0);
+}
+
+/* =========================
+   ROOM LIST
+========================= */
 .room-list{
-  margin-top:14px;
+  margin-top:12px;
   display:flex;
   flex-direction:column;
   gap:10px;
 }
 
 .room{
-  background:var(--bg-panel-2);
+  background:
+    linear-gradient(180deg,var(--bg-panel-2),#0c1233);
   padding:12px 14px;
-  border-radius:14px;
+  border-radius:var(--radius-sm);
   cursor:pointer;
+  transition:.2s;
+  border:1px solid rgba(255,255,255,.03);
 }
 
 .room:hover{
-  background:#1c2760;
+  background:#1c2770;
+  transform:translateX(3px);
 }
 
-/* CHAT */
+/* =========================
+   CHAT HEADER
+========================= */
 .chat-header{
-  padding:14px 18px;
-  background:rgba(0,0,0,.4);
+  height:56px;
+  padding:0 18px;
+  background:rgba(5,8,25,.65);
+  backdrop-filter:var(--blur);
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:12px;
+  border-bottom:1px solid rgba(255,255,255,.05);
 }
 
-.chat-body{
-  flex:1;
+.chat-header .back-btn{
+  background:var(--bg-panel-2);
+  padding:6px 12px;
+  border-radius:12px;
+  font-size:14px;
+}
+
+/* =========================
+   CHAT BODY
+========================= */
+.chat-messages{
+  height:calc(100vh - 120px);
   padding:20px;
   overflow-y:auto;
   display:flex;
@@ -121,49 +179,111 @@ button:hover{
   gap:12px;
 }
 
+.chat-messages::-webkit-scrollbar{
+  width:6px;
+}
+.chat-messages::-webkit-scrollbar-thumb{
+  background:#2b357a;
+  border-radius:10px;
+}
+
+/* =========================
+   MESSAGES
+========================= */
 .message{
   max-width:70%;
-  background:var(--bg-panel);
+  background:
+    linear-gradient(180deg,var(--bg-panel),#0b102a);
   padding:10px 14px;
   border-radius:16px;
+  font-size:14px;
+  line-height:1.4;
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
 }
 
 .message.me{
   align-self:flex-end;
-  background:#1c265c;
+  background:
+    linear-gradient(180deg,#1b2566,#131a44);
 }
 
-/* CHAT INPUT */
-.chat-footer{
+/* =========================
+   CHAT INPUT (BOTTOM)
+========================= */
+.chat-input{
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
   padding:10px;
-  background:rgba(0,0,0,.6);
+  background:rgba(5,8,25,.75);
+  backdrop-filter:var(--blur);
   display:flex;
   gap:8px;
+  align-items:center;
+  border-top:1px solid rgba(255,255,255,.05);
 }
 
-.chat-footer button{
-  padding:0 14px;
+.chat-input input{
+  flex:1;
 }
 
-/* GIF PANEL */
-.gif-panel{
+/* =========================
+   EMOJI BUTTON
+========================= */
+.emoji-btn{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  background:var(--bg-panel-2);
+}
+
+/* =========================
+   EMOJI PANEL
+========================= */
+.emoji-panel{
+  position:fixed;
+  bottom:70px;
+  left:10px;
+  z-index:50;
+}
+
+.hidden{
   display:none;
-  background:#0b1025;
-  padding:10px;
+}
+
+/* Emoji Picker theme */
+emoji-picker{
+  --background:#0b102a;
+  --border-radius:16px;
+  --emoji-size:1.35rem;
+  --category-font-color:#aab0ff;
+  --indicator-color:#6c7cff;
+  box-shadow:0 15px 40px rgba(0,0,0,.6);
+}
+
+/* =========================
+   GIF PANEL (на будущее)
+========================= */
+.gif-panel{
+  display:flex;
   gap:10px;
+  padding:10px;
+  background:var(--bg-panel-3);
   overflow-x:auto;
 }
 
 .gif-panel img{
-  height:80px;
+  height:90px;
   border-radius:12px;
   cursor:pointer;
+  transition:.2s;
 }
 
-emoji-picker{
-  --background:#0b1025;
-  --border-radius:16px;
-  --emoji-size:1.3rem;
-  --category-font-color:#aab0ff;
-  box-shadow:0 10px 40px rgba(0,0,0,.6);
+.gif-panel img:hover{
+  transform:scale(1.05);
 }
