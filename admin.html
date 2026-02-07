@@ -2,91 +2,98 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>FASTMOST Admin</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin • FASTMOST</title>
+<meta name="viewport" content="width=device-width">
 <style>
 body{
   margin:0;
+  font-family:Inter;
   background:#0b0e14;
   color:white;
-  font-family:Inter,system-ui;
 }
 header{
-  height:60px;
-  background:#141827;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 20px;
-}
-section{
   padding:20px;
+  background:#11162a;
+  display:flex;
+  justify-content:space-between;
 }
+section{padding:20px}
 .card{
-  background:#151a2e;
+  background:#11162a;
   border-radius:14px;
-  padding:16px;
-  margin-bottom:16px;
+  padding:14px;
+  margin-bottom:14px;
 }
 button{
-  background:#f04747;
+  background:#e74c3c;
   border:none;
+  padding:6px 10px;
+  border-radius:8px;
   color:white;
-  padding:8px 14px;
-  border-radius:10px;
   cursor:pointer;
 }
 </style>
 </head>
-
 <body>
 
 <header>
-  <b>🛡 FASTMOST Admin</b>
-  <button onclick="location.href='index.html'">Выйти</button>
+  <b>🛠 Админ-панель</b>
+  <button onclick="location.href='index.html'">Назад</button>
 </header>
 
 <section>
+  <div class="card">
+    <h3>📊 Статистика</h3>
+    <div id="stats"></div>
+  </div>
 
-<div class="card">
-  <h3>📊 Статистика</h3>
-  <p id="stats">Загрузка...</p>
-</div>
-
-<div class="card">
-  <h3>👥 Пользователи онлайн</h3>
-  <ul id="users"></ul>
-</div>
-
+  <div class="card">
+    <h3>🧹 Комнаты</h3>
+    <div id="rooms"></div>
+  </div>
 </section>
 
 <script type="module">
 import { initializeApp } from
 "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-
-import { getFirestore, collection, getDocs }
+import { getAuth,onAuthStateChanged }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,collection,onSnapshot,doc,deleteDoc
+}
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
-  authDomain: "fastmost-f8084.firebaseapp.com",
-  projectId: "fastmost-f8084"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// USERS
-const usersSnap = await getDocs(collection(db,"users"));
-document.getElementById("stats").innerText =
-`Всего пользователей: ${usersSnap.size}`;
-
-usersSnap.forEach(doc=>{
-  const u = doc.data();
-  const li = document.createElement("li");
-  li.textContent = `${u.name || "User"} (${u.role})`;
-  document.getElementById("users").appendChild(li);
+const app = initializeApp({
+  apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
+  authDomain:"fastmost-f8084.firebaseapp.com",
+  projectId:"fastmost-f8084"
 });
+const auth=getAuth();
+const db=getFirestore();
+
+onAuthStateChanged(auth,async user=>{
+  if(!user) location.href="index.html";
+});
+
+onSnapshot(collection(db,"users"),snap=>{
+  stats.innerHTML=`👥 Пользователей: ${snap.size}`;
+});
+
+onSnapshot(collection(db,"rooms"),snap=>{
+  rooms.innerHTML="";
+  snap.forEach(d=>{
+    const div=document.createElement("div");
+    div.innerHTML=`# ${d.data().name}
+      <button onclick="del('${d.id}')">Удалить</button>`;
+    rooms.appendChild(div);
+  });
+});
+
+window.del=async(id)=>{
+  if(confirm("Удалить комнату?")){
+    await deleteDoc(doc(db,"rooms",id));
+  }
+};
 </script>
 
 </body>
