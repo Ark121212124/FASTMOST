@@ -5,184 +5,223 @@
 <title>FASTMOST</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#5865f2">
-
-<!-- Libs -->
 <script src="https://meet.jit.si/external_api.js"></script>
 
 <style>
+:root{
+  --bg:#0b0e14;
+  --panel:#141827cc;
+  --panel-solid:#141827;
+  --accent:#5865f2;
+  --text:#e6e8f0;
+  --muted:#8b90b3;
+  --radius:14px;
+}
+
 /* ===== RESET ===== */
-*{box-sizing:border-box;margin:0;padding:0}
-body{
-  height:100vh;
-  background:radial-gradient(circle at top,#1e2233,#0b0e14);
-  font-family:Inter,system-ui;
-  color:#fff;
-  overflow:hidden;
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  height:100%;
+  background:radial-gradient(circle at top,#1c2038,#0b0e14);
+  color:var(--text);
+  font-family:Inter,system-ui,Segoe UI;
 }
 
-/* ===== ANIMATIONS ===== */
-.fade{animation:fade .4s ease}
-@keyframes fade{from{opacity:0;transform:scale(.97)}to{opacity:1}}
-
-.blur{
-  backdrop-filter:blur(14px);
-  background:rgba(20,24,39,.85);
-}
-
-/* ===== LAYOUT ===== */
+/* ===== APP GRID ===== */
 #app{
   display:grid;
-  grid-template-columns:72px 260px 1fr 240px;
+  grid-template-columns:72px 260px 1fr 260px;
   height:100vh;
+  gap:12px;
+  padding:12px;
 }
 
-.sidebar, .rooms, .users{background:#151622}
-.sidebar{padding:10px}
-.rooms{padding:12px}
-.users{padding:12px}
+/* ===== GLASS PANELS ===== */
+.panel{
+  background:var(--panel);
+  backdrop-filter:blur(18px);
+  border-radius:var(--radius);
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
+  display:flex;
+  flex-direction:column;
+}
 
-/* ===== SIDEBAR ===== */
-.logo{
+/* ===== SERVER BAR ===== */
+.servers{
+  align-items:center;
+  padding:12px 0;
+  gap:12px;
+}
+.server{
+  width:48px;height:48px;
+  border-radius:16px;
+  background:#1f2340;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   font-weight:900;
-  text-align:center;
-  color:#5865f2;
-  margin-bottom:14px;
+  cursor:pointer;
+  transition:.25s;
+}
+.server:hover{
+  border-radius:14px;
+  background:var(--accent);
 }
 
 /* ===== ROOMS ===== */
+.rooms-header{
+  padding:16px;
+  font-weight:700;
+}
 .room{
-  padding:8px;
-  border-radius:8px;
+  padding:10px 14px;
+  margin:4px 8px;
+  border-radius:10px;
   cursor:pointer;
+  color:var(--muted);
   transition:.2s;
 }
-.room:hover{
-  background:#5865f2;
+.room:hover,
+.room.active{
+  background:#1f2340;
+  color:white;
 }
 
 /* ===== CHAT ===== */
-.chat{
-  display:flex;
-  flex-direction:column;
-  height:100%;
-}
-.header{
-  padding:14px;
-  border-bottom:1px solid #222;
+.chat-header{
+  padding:16px;
+  border-bottom:1px solid #1f2340;
+  font-weight:700;
 }
 .messages{
   flex:1;
+  padding:16px;
   overflow:auto;
-  padding:14px;
 }
 .msg{
-  margin-bottom:10px;
+  margin-bottom:14px;
 }
-.input{
+.msg-user{
+  font-weight:600;
+  font-size:14px;
+}
+.msg-text{
+  color:var(--text);
+  opacity:.9;
+}
+.chat-input{
+  padding:12px;
   display:flex;
   gap:10px;
-  padding:10px;
 }
-.input input{
+.chat-input input{
   flex:1;
-  padding:12px;
-  border-radius:10px;
+  padding:12px 14px;
+  border-radius:12px;
   border:none;
   background:#0f1324;
   color:white;
 }
-.input button{
+.chat-input button{
   padding:12px 18px;
   border:none;
-  border-radius:10px;
-  background:#5865f2;
+  border-radius:12px;
+  background:var(--accent);
   color:white;
+  cursor:pointer;
+}
+
+/* ===== VOICE ===== */
+.voice{
+  height:220px;
+  border-top:1px solid #1f2340;
 }
 
 /* ===== USERS ===== */
+.users-header{
+  padding:16px;
+  font-weight:700;
+}
 .user{
+  padding:8px 12px;
   display:flex;
   align-items:center;
   gap:8px;
-  margin-bottom:6px;
+  color:var(--muted);
 }
 .status{
-  width:8px;height:8px;border-radius:50%;
+  width:8px;height:8px;
+  border-radius:50%;
 }
 .online{background:#3ba55d}
-.offline{background:#555}
+.offline{background:#666}
 
-/* ===== NOTIFICATION ===== */
-.toast{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  background:#5865f2;
-  padding:14px 18px;
-  border-radius:12px;
-  animation:fade .3s;
+/* ===== SCROLL ===== */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-thumb{
+  background:#2a2f55;
+  border-radius:10px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="app" class="fade">
+<div id="app">
 
-  <!-- ICON BAR -->
-  <div class="sidebar blur">
-    <div class="logo">FM</div>
+  <!-- SERVERS -->
+  <div class="panel servers">
+    <div class="server">FM</div>
   </div>
 
   <!-- ROOMS -->
-  <div class="rooms blur">
-    <h3>Комнаты</h3>
-    <input id="roomName" placeholder="Новая комната" style="width:100%;margin:10px 0">
-    <button onclick="createRoom()">Создать</button>
+  <div class="panel">
+    <div class="rooms-header">Комнаты</div>
+    <input id="roomName" placeholder="Новая комната"
+      style="margin:0 12px 8px;padding:10px;border-radius:10px;border:none;background:#0f1324;color:white">
+    <button onclick="createRoom()"
+      style="margin:0 12px 12px;padding:10px;border:none;border-radius:10px;background:#5865f2;color:white">
+      Создать
+    </button>
     <div id="roomList"></div>
   </div>
 
   <!-- CHAT -->
-  <div class="chat blur">
-    <div class="header" id="roomTitle">Выберите комнату</div>
+  <div class="panel">
+    <div class="chat-header" id="roomTitle">Выберите комнату</div>
     <div class="messages" id="messages"></div>
-    <div class="input">
+    <div class="chat-input">
       <input id="message" placeholder="Сообщение">
       <button onclick="sendMessage()">➤</button>
     </div>
-    <div id="voice"></div>
+    <div class="voice" id="voice"></div>
   </div>
 
   <!-- USERS -->
-  <div class="users blur">
-    <h3>Участники</h3>
+  <div class="panel">
+    <div class="users-header">Участники</div>
     <div id="users"></div>
   </div>
 
 </div>
 
 <script type="module">
-/* ===== FIREBASE ===== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
   authDomain:"fastmost-f8084.firebaseapp.com",
   projectId:"fastmost-f8084"
 });
-
-const auth = getAuth(app);
-const db = getFirestore(app);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
 let currentRoom=null;
-let username="User"+Math.floor(Math.random()*9999);
+let username="User"+Math.floor(Math.random()*9000);
 
-/* ===== ONLINE STATUS ===== */
 onAuthStateChanged(auth,u=>{
   if(!u){
     signInAnonymously(auth);
@@ -190,62 +229,64 @@ onAuthStateChanged(auth,u=>{
   }
   setDoc(doc(db,"users",u.uid),{
     name:username,
-    online:true,
-    role:"user"
+    online:true
   });
 });
 
-/* ===== ROOMS ===== */
-window.createRoom = async ()=>{
-  if(!roomName.value) return;
+/* ROOMS */
+window.createRoom=async()=>{
+  if(!roomName.value)return;
   await addDoc(collection(db,"rooms"),{name:roomName.value});
   roomName.value="";
 };
-
 onSnapshot(collection(db,"rooms"),snap=>{
   roomList.innerHTML="";
   snap.forEach(d=>{
     const r=document.createElement("div");
     r.className="room";
-    r.innerText="# "+d.data().name;
-    r.onclick=()=>enterRoom(d.id,d.data().name);
+    r.textContent="# "+d.data().name;
+    r.onclick=()=>enterRoom(d.id,d.data().name,r);
     roomList.appendChild(r);
   });
 });
 
-/* ===== ENTER ROOM ===== */
-function enterRoom(id,name){
+/* ENTER */
+function enterRoom(id,name,el){
+  document.querySelectorAll(".room").forEach(r=>r.classList.remove("active"));
+  el.classList.add("active");
   currentRoom=id;
-  roomTitle.innerText="# "+name;
+  roomTitle.textContent="# "+name;
   messages.innerHTML="";
   startChat();
   startVoice();
 }
 
-/* ===== CHAT ===== */
+/* CHAT */
 function startChat(){
   onSnapshot(query(collection(db,"rooms",currentRoom,"messages"),orderBy("time")),snap=>{
     messages.innerHTML="";
     snap.forEach(d=>{
       const m=d.data();
-      messages.innerHTML+=`<div class="msg"><b>${m.user}</b>: ${m.text}</div>`;
+      messages.innerHTML+=`
+        <div class="msg">
+          <div class="msg-user">${m.user}</div>
+          <div class="msg-text">${m.text}</div>
+        </div>`;
     });
     messages.scrollTop=messages.scrollHeight;
   });
 }
-
-window.sendMessage = async ()=>{
-  if(!message.value) return;
+window.sendMessage=async()=>{
+  if(!message.value)return;
   await addDoc(collection(db,"rooms",currentRoom,"messages"),{
     user:username,
     text:message.value,
     time:serverTimestamp()
   });
-  notify("Новое сообщение");
   message.value="";
 };
 
-/* ===== USERS ===== */
+/* USERS */
 onSnapshot(collection(db,"users"),snap=>{
   users.innerHTML="";
   snap.forEach(d=>{
@@ -253,34 +294,20 @@ onSnapshot(collection(db,"users"),snap=>{
     users.innerHTML+=`
       <div class="user">
         <div class="status ${u.online?"online":"offline"}"></div>
-        ${u.name} ${u.role==="admin"?"⭐":""}
+        ${u.name}
       </div>`;
   });
 });
 
-/* ===== VOICE ===== */
+/* VOICE */
 function startVoice(){
   voice.innerHTML="";
   new JitsiMeetExternalAPI("meet.jit.si",{
     roomName:"FASTMOST_"+currentRoom,
     parentNode:voice,
-    height:240
+    height:220
   });
 }
-
-/* ===== NOTIFY ===== */
-function notify(text){
-  if(Notification.permission==="granted"){
-    new Notification("FASTMOST",{body:text});
-  }
-  const t=document.createElement("div");
-  t.className="toast";
-  t.innerText=text;
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),2500);
-}
-
-Notification.requestPermission();
 </script>
 
 </body>
