@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>FASTMOST</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<style>
+body{
+  margin:0;
+  height:100vh;
+  font-family:Inter,system-ui;
+  background:radial-gradient(circle at top,#5865f2,#0b0e14 60%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+}
+.card{
+  backdrop-filter:blur(20px);
+  background:rgba(20,25,50,.6);
+  padding:40px;
+  border-radius:24px;
+  width:420px;
+  text-align:center;
+  box-shadow:0 20px 80px rgba(0,0,0,.6);
+}
+h1{margin:0;font-size:38px}
+p{opacity:.8}
+button{
+  margin-top:20px;
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+  background:#5865f2;
+  color:white;
+  cursor:pointer;
+}
+button:hover{filter:brightness(1.1)}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>FASTMOST</h1>
+  <p>Голос • Чаты • Комнаты</p>
+  <button onclick="location.href='index.html'">Войти</button>
+</div>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+
+</body>
+</html>
