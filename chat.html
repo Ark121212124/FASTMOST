@@ -2,175 +2,133 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>FASTMOST Chat</title>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat</title>
 
 <style>
-html, body {
-  height: 100%;
-  margin: 0;
-  background: radial-gradient(1200px 600px at top, #151a33, #070b18);
-  font-family: Inter, Arial, sans-serif;
-  color: #fff;
+:root{
+  --bg:#0b1020;
+  --panel:#11173a;
+  --accent:#5865f2;
 }
 
-/* Верхняя панель */
-.chat-header {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  background: rgba(20,25,55,.6);
-  backdrop-filter: blur(10px);
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  height:100%;
+  background:radial-gradient(1200px 600px at top,#141a40,#070b18);
+  font-family:Inter,Arial;
+  color:white;
 }
 
-/* Контейнер чата */
-.chat-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 56px);
+.chat{
+  display:flex;
+  flex-direction:column;
+  height:100vh;
 }
 
-/* Сообщения */
-.messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 14px 16px;
-  gap: 8px;
-  display: flex;
-  flex-direction: column;
+/* header */
+.chat-header{
+  height:56px;
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  background:rgba(20,25,55,.8);
 }
 
-/* Одно сообщение */
-.message {
-  max-width: 70%;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(255,255,255,.08);
-  backdrop-filter: blur(6px);
-  animation: fadeUp .2s ease;
+/* messages */
+.messages{
+  flex:1;
+  padding:14px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
 }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+.msg{
+  max-width:70%;
+  padding:10px 14px;
+  border-radius:14px;
+  background:rgba(255,255,255,.08);
+  animation:fade .2s ease;
 }
 
-/* Мой текст */
-.message.me {
-  align-self: flex-end;
-  background: linear-gradient(135deg,#5865f2,#7b83ff);
+.msg.me{
+  align-self:flex-end;
+  background:linear-gradient(135deg,#5865f2,#7b83ff);
 }
 
-/* Нижний бар */
-.chat-input {
-  display: flex;
-  gap: 8px;
-  padding: 10px 12px;
-  background: rgba(10,14,35,.9);
-  backdrop-filter: blur(10px);
+@keyframes fade{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1}
 }
 
-/* Поле */
-.chat-input input {
-  flex: 1;
-  height: 42px;
-  border-radius: 12px;
-  border: none;
-  background: rgba(255,255,255,.07);
-  padding: 0 14px;
-  color: white;
-  outline: none;
+/* input */
+.chat-input{
+  display:flex;
+  gap:8px;
+  padding:10px;
+  background:rgba(10,14,35,.9);
 }
 
-/* Кнопки */
-.chat-input button {
-  height: 42px;
-  min-width: 42px;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg,#5865f2,#7b83ff);
-  color: white;
-  cursor: pointer;
+.chat-input input{
+  flex:1;
+  height:42px;
+  border:none;
+  border-radius:12px;
+  padding:0 14px;
+  background:rgba(255,255,255,.08);
+  color:white;
 }
+
+.chat-input button{
+  width:42px;
+  border:none;
+  border-radius:12px;
+  background:var(--accent);
+  color:white;
+  cursor:pointer;
+}
+</style>
 </head>
 
 <body>
+<div class="chat">
 
-<div class="header">
-<button onclick="history.back()">← Назад</button>
-</div>
+  <div class="chat-header">
+    <button onclick="history.back()">← Назад</button>
+    <div style="margin-left:12px;font-weight:600">FASTMOST · Чат</div>
+  </div>
 
-<div class="messages" id="messages"></div>
+  <div id="messages" class="messages"></div>
 
-<div class="input">
-<button onclick="sendGif()">GIF</button>
-<input id="text" placeholder="Сообщение">
-<button onclick="send()">➤</button>
+  <div class="chat-input">
+    <button title="Emoji">😊</button>
+    <input id="text" placeholder="Сообщение..." />
+    <button onclick="send()">➤</button>
+  </div>
+
 </div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
-  authDomain: "fastmost-f8084.firebaseapp.com",
-  projectId: "fastmost-f8084"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+function send(){
+  const input=document.getElementById('text');
+  const text=input.value.trim();
+  if(!text)return;
 
-const room = new URLSearchParams(location.search).get("room");
+  const msg=document.createElement('div');
+  msg.className='msg me';
+  msg.textContent=text;
 
-function send() {
-  if(!text.value) return;
-  db.collection("rooms").doc(room)
-    .collection("messages")
-    .add({
-      text: text.value,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  text.value="";
+  document.getElementById('messages').appendChild(msg);
+  input.value='';
+  document.getElementById('messages').scrollTop=999999;
 }
 
-function sendGif() {
-  fetch(`https://api.giphy.com/v1/gifs/trending?api_key=0GqIeLqsCjxbpdCUUiVNe4JzSMwKQqsQ&limit=1`)
-    .then(r=>r.json())
-    .then(d=>{
-      const url = d.data[0].images.fixed_width.url;
-      db.collection("rooms").doc(room)
-        .collection("messages")
-        .add({
-          gif:url,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    });
-}
-
-db.collection("rooms").doc(room)
-  .collection("messages")
-  .orderBy("createdAt")
-  .onSnapshot(snap=>{
-    messages.innerHTML="";
-    snap.forEach(doc=>{
-      const m = doc.data();
-      const div = document.createElement("div");
-      div.className="msg";
-
-      if(m.text) div.textContent = m.text;
-      if(m.gif) {
-        const img = document.createElement("img");
-        img.src = m.gif;
-        img.className="gif";
-        div.appendChild(img);
-      }
-
-      messages.appendChild(div);
-      messages.scrollTop = messages.scrollHeight;
-    });
-  });
+document.getElementById('text')
+  .addEventListener('keydown',e=>{if(e.key==='Enter')send()});
 </script>
 
 </body>
 </html>
-
