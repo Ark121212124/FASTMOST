@@ -5,301 +5,285 @@
 <title>FASTMOST</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#5865f2">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
-:root{
-  --bg:#0b0e14;
-  --panel:#141827cc;
-  --panel-solid:#141827;
-  --accent:#5865f2;
-  --text:#e6e8f0;
-  --muted:#8b90b3;
-  --radius:18px;
-}
 *{box-sizing:border-box}
 html,body{
   margin:0;
   height:100%;
-  background:radial-gradient(circle at top,#1b1f3b,#0b0e14);
   font-family:Inter,system-ui;
-  color:var(--text);
+  background:#0b0e14;
+  color:#fff;
 }
-
-/* ===== LAYOUT ===== */
-#app{
-  display:flex;
+.app{
+  display:grid;
+  grid-template-columns:80px 260px 1fr 240px;
   height:100vh;
-  overflow:hidden;
 }
 
-/* ===== SIDEBAR ===== */
-.sidebar{
-  width:280px;
-  background:var(--panel);
-  backdrop-filter:blur(18px);
-  padding:20px;
+/* LEFT ICON BAR */
+.nav{
+  background:#0d111c;
   display:flex;
   flex-direction:column;
-  gap:14px;
+  align-items:center;
+  padding:12px 0;
 }
-.logo{
-  font-size:22px;
-  font-weight:900;
-}
-.btn{
-  background:var(--accent);
-  border:none;
-  padding:14px;
+.nav .logo{
+  width:44px;height:44px;
   border-radius:14px;
-  color:white;
-  font-weight:600;
-  cursor:pointer;
-  transition:.2s;
-}
-.btn:hover{
-  transform:translateY(-2px);
-  box-shadow:0 10px 30px rgba(88,101,242,.4);
-}
-
-/* ===== MAIN ===== */
-.main{
-  flex:1;
-  padding:32px;
-  overflow-y:auto;
-}
-
-/* ===== HERO ===== */
-.hero{
-  background:linear-gradient(135deg,#5865f2,#3b45a5);
-  border-radius:26px;
-  padding:40px;
-  margin-bottom:32px;
-}
-.hero h1{margin:0;font-size:34px}
-.hero p{margin-top:10px;opacity:.9}
-
-/* ===== SECTIONS ===== */
-.section{margin-bottom:40px}
-.section-title{
-  font-size:18px;
-  margin-bottom:14px;
-}
-
-/* ===== ROOMS ===== */
-.rooms{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
-  gap:18px;
-}
-.room{
-  background:var(--panel);
-  backdrop-filter:blur(16px);
-  border-radius:20px;
-  padding:20px;
-  cursor:pointer;
-  transition:.25s;
-}
-.room:hover{
-  transform:translateY(-6px);
-  box-shadow:0 20px 50px rgba(0,0,0,.45);
-}
-.room .type{font-size:13px;color:var(--muted)}
-.room .name{font-size:20px;margin-top:8px}
-
-/* ===== MODAL ===== */
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.65);
-  backdrop-filter:blur(6px);
-  display:none;
+  background:#5865f2;
+  display:flex;
   align-items:center;
   justify-content:center;
-  z-index:10;
-}
-.modal-content{
-  background:var(--panel-solid);
-  padding:30px;
-  border-radius:24px;
-  width:420px;
-}
-.modal input,.modal select{
-  width:100%;
-  padding:14px;
-  margin-top:12px;
-  border-radius:14px;
-  border:none;
-  background:#0f1324;
-  color:white;
+  font-weight:700;
 }
 
-/* ===== USERS ===== */
+/* ROOMS */
+.rooms{
+  background:#11162a;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+}
+.rooms h3{
+  margin:0 0 10px;
+  opacity:.7;
+}
+.rooms input{
+  background:#0b0f1f;
+  border:none;
+  border-radius:10px;
+  padding:10px;
+  color:white;
+}
+.rooms button{
+  margin-top:8px;
+  background:#5865f2;
+  border:none;
+  padding:10px;
+  border-radius:10px;
+  color:white;
+  cursor:pointer;
+}
+.room{
+  padding:10px;
+  border-radius:10px;
+  margin-top:6px;
+  cursor:pointer;
+}
+.room:hover{background:#1a2040}
+
+/* CHAT */
+.chat{
+  display:flex;
+  flex-direction:column;
+  background:linear-gradient(180deg,#0f1426,#0b0e14);
+}
+.chat-header{
+  padding:14px;
+  background:#12183a;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.messages{
+  flex:1;
+  padding:16px;
+  overflow-y:auto;
+}
+.msg{
+  margin-bottom:10px;
+}
+.msg span{
+  opacity:.6;
+  font-size:12px;
+}
+.chat-input{
+  display:flex;
+  gap:10px;
+  padding:12px;
+  background:#0e1328;
+}
+.chat-input input{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+  background:#0b0f1f;
+  color:white;
+}
+.chat-input button{
+  width:44px;
+  border:none;
+  border-radius:12px;
+  background:#5865f2;
+  cursor:pointer;
+}
+
+/* USERS */
 .users{
-  margin-top:30px;
+  background:#0d111c;
+  padding:14px;
 }
 .user{
   display:flex;
   align-items:center;
   gap:8px;
-  margin-bottom:6px;
+  margin-bottom:8px;
 }
-.status{
-  width:10px;
-  height:10px;
+.dot{
+  width:8px;
+  height:8px;
   border-radius:50%;
+  background:#3ba55d;
 }
-.online{background:#3ba55d}
-.offline{background:#747f8d}
-
-/* ===== SCROLL ===== */
-::-webkit-scrollbar{width:8px}
-::-webkit-scrollbar-thumb{background:#2a2f55;border-radius:10px}
 </style>
 </head>
 
 <body>
 
-<div id="app">
+<div class="app">
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="logo">FASTMOST</div>
-    <button class="btn" onclick="openModal()">➕ Создать комнату</button>
-    <button class="btn" onclick="location.href='profile.html'">👤 Личный кабинет</button>
+  <!-- ICON BAR -->
+  <div class="nav">
+    <div class="logo">FM</div>
+  </div>
 
-    <div class="users">
-      <b>Онлайн</b>
-      <div id="users"></div>
+  <!-- ROOMS -->
+  <div class="rooms">
+    <h3>Комнаты</h3>
+    <input id="roomName" placeholder="Новая комната">
+    <button onclick="createRoom()">Создать</button>
+    <div id="roomList"></div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat">
+    <div class="chat-header">
+      <b id="roomTitle">Выберите комнату</b>
+      <button onclick="joinVoice()">🎙 Voice</button>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="chat-input">
+      <input id="msgInput" placeholder="Сообщение...">
+      <button onclick="sendMessage()">➤</button>
     </div>
   </div>
 
-  <!-- MAIN -->
-  <div class="main">
-    <div class="hero">
-      <h1>Добро пожаловать в FASTMOST</h1>
-      <p>Голосовые и текстовые комнаты нового поколения</p>
-    </div>
-
-    <div class="section">
-      <div class="section-title">🔊 Voice комнаты</div>
-      <div class="rooms" id="voiceRooms"></div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">💬 Текстовые комнаты</div>
-      <div class="rooms" id="textRooms"></div>
-    </div>
+  <!-- USERS -->
+  <div class="users">
+    <h3>Онлайн</h3>
+    <div id="userList"></div>
   </div>
 
-</div>
-
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h3>Создать комнату</h3>
-    <input id="roomName" placeholder="Название комнаты">
-    <select id="roomType">
-      <option value="voice">Голосовая</option>
-      <option value="text">Текстовая</option>
-    </select>
-    <br><br>
-    <button class="btn" onclick="createRoom()">Создать</button>
-  </div>
 </div>
 
 <!-- FIREBASE -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getDatabase, ref, set, onDisconnect, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { initializeApp } from
+"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
+import { getAuth, onAuthStateChanged }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+import {
+  getFirestore, collection, addDoc,
+  onSnapshot, query, orderBy, serverTimestamp
+}
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
-  authDomain:"fastmost-f8084.firebaseapp.com",
-  projectId:"fastmost-f8084",
-  databaseURL:"https://fastmost-f8084-default-rtdb.firebaseio.com"
+  apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
+  authDomain: "fastmost-f8084.firebaseapp.com",
+  projectId: "fastmost-f8084"
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const rtdb = getDatabase(app);
+const auth = getAuth();
+const db = getFirestore();
 
-/* ===== ONLINE STATUS ===== */
-onAuthStateChanged(auth, user => {
-  if(!user) return;
-  const statusRef = ref(rtdb,"status/"+user.uid);
+let currentRoom = null;
+let userEmail = "";
 
-  set(statusRef,{
-    email:user.email,
-    online:true,
-    lastSeen:Date.now()
-  });
-
-  onDisconnect(statusRef).set({
-    email:user.email,
-    online:false,
-    lastSeen:Date.now()
-  });
+onAuthStateChanged(auth,user=>{
+  if(!user) location.href="login.html";
+  userEmail = user.email;
+  loadRooms();
+  loadUsers();
 });
 
-/* ===== USERS LIST ===== */
-onValue(ref(rtdb,"status"), snap=>{
-  users.innerHTML="";
-  snap.forEach(u=>{
-    const d=u.val();
-    users.innerHTML+=`
-      <div class="user">
-        <span class="status ${d.online?'online':'offline'}"></span>
-        ${d.email}
-      </div>`;
+function loadRooms(){
+  onSnapshot(collection(db,"rooms"),snap=>{
+    roomList.innerHTML="";
+    snap.forEach(doc=>{
+      const d = doc.data();
+      const div = document.createElement("div");
+      div.className="room";
+      div.textContent="# "+d.name;
+      div.onclick=()=>openRoom(doc.id,d.name);
+      roomList.appendChild(div);
+    });
   });
-});
+}
 
-/* ===== MODAL ===== */
-window.openModal=()=>modal.style.display="flex";
-modal.onclick=e=>{if(e.target===modal)modal.style.display="none"};
-
-/* ===== ROOMS ===== */
 window.createRoom = async ()=>{
   if(!roomName.value) return;
   await addDoc(collection(db,"rooms"),{
     name:roomName.value,
-    type:roomType.value
+    createdAt:serverTimestamp()
   });
-  modal.style.display="none";
   roomName.value="";
 };
 
-onSnapshot(collection(db,"rooms"),snap=>{
-  voiceRooms.innerHTML="";
-  textRooms.innerHTML="";
-  snap.forEach(d=>{
-    const r=d.data();
-    const el=document.createElement("div");
-    el.className="room";
-    el.innerHTML=`
-      <div class="type">${r.type==="voice"?"🔊 Voice":"💬 Text"}</div>
-      <div class="name">${r.name}</div>`;
-    el.onclick=()=>{
-      location.href = r.type==="voice"
-        ? `voice.html?room=${d.id}`
-        : `chat.html?room=${d.id}`;
-    };
-    (r.type==="voice"?voiceRooms:textRooms).appendChild(el);
-  });
-});
-</script>
-
-<!-- SERVICE WORKER -->
-<script>
-if("serviceWorker"in navigator){
-  navigator.serviceWorker.register("sw.js");
+function openRoom(id,name){
+  currentRoom=id;
+  roomTitle.textContent="# "+name;
+  messages.innerHTML="";
+  onSnapshot(
+    query(collection(db,"rooms",id,"messages"),orderBy("time")),
+    snap=>{
+      messages.innerHTML="";
+      snap.forEach(doc=>{
+        const m = doc.data();
+        const div=document.createElement("div");
+        div.className="msg";
+        div.innerHTML=`<span>${m.user}</span><br>${m.text}`;
+        messages.appendChild(div);
+      });
+      messages.scrollTop=99999;
+    }
+  );
 }
+
+window.sendMessage = async ()=>{
+  if(!msgInput.value || !currentRoom) return;
+  await addDoc(collection(db,"rooms",currentRoom,"messages"),{
+    text:msgInput.value,
+    user:userEmail,
+    time:serverTimestamp()
+  });
+  msgInput.value="";
+};
+
+function loadUsers(){
+  onSnapshot(collection(db,"users"),snap=>{
+    userList.innerHTML="";
+    snap.forEach(doc=>{
+      const u=doc.data();
+      const div=document.createElement("div");
+      div.className="user";
+      div.innerHTML=`<div class="dot"></div>${u.email}`;
+      userList.appendChild(div);
+    });
+  });
+}
+
+window.joinVoice = ()=>{
+  if(!currentRoom) return;
+  location.href="voice.html?room="+currentRoom;
+};
 </script>
 
 </body>
