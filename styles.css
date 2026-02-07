@@ -1,0 +1,161 @@
+:root{
+  --bg-main:#070b1a;
+  --bg-panel:#0f1633;
+  --bg-panel-2:#141d42;
+  --accent:#6c7cff;
+  --accent-hover:#8290ff;
+  --text:#e6e9ff;
+  --muted:#aab0ff;
+  --radius:18px;
+}
+
+/* RESET */
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Inter,system-ui,-apple-system;
+}
+
+body{
+  background:
+    radial-gradient(1200px 600px at top,#182061,#050710);
+  color:var(--text);
+  min-height:100vh;
+}
+
+/* LAYOUT */
+.page{
+  padding:24px;
+}
+
+.header{
+  font-size:28px;
+  font-weight:700;
+  margin-bottom:24px;
+}
+
+/* PANELS */
+.panel{
+  background:linear-gradient(180deg,var(--bg-panel),var(--bg-main));
+  border-radius:var(--radius);
+  padding:20px;
+  margin-bottom:24px;
+}
+
+/* TITLES */
+.panel h2{
+  font-size:18px;
+  margin-bottom:12px;
+}
+
+/* INPUTS */
+.input-row{
+  display:flex;
+  gap:10px;
+}
+
+input{
+  flex:1;
+  background:#0b1230;
+  border:none;
+  border-radius:14px;
+  padding:12px 14px;
+  color:#fff;
+  font-size:14px;
+}
+
+input::placeholder{
+  color:var(--muted);
+}
+
+/* BUTTONS */
+button{
+  background:var(--accent);
+  border:none;
+  border-radius:14px;
+  padding:12px 18px;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+
+button:hover{
+  background:var(--accent-hover);
+}
+
+/* ROOM LIST */
+.room-list{
+  margin-top:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.room{
+  background:var(--bg-panel-2);
+  padding:12px 14px;
+  border-radius:14px;
+  cursor:pointer;
+}
+
+.room:hover{
+  background:#1c2760;
+}
+
+/* CHAT */
+.chat-header{
+  padding:14px 18px;
+  background:rgba(0,0,0,.4);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.chat-body{
+  flex:1;
+  padding:20px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.message{
+  max-width:70%;
+  background:var(--bg-panel);
+  padding:10px 14px;
+  border-radius:16px;
+}
+
+.message.me{
+  align-self:flex-end;
+  background:#1c265c;
+}
+
+/* CHAT INPUT */
+.chat-footer{
+  padding:10px;
+  background:rgba(0,0,0,.6);
+  display:flex;
+  gap:8px;
+}
+
+.chat-footer button{
+  padding:0 14px;
+}
+
+/* GIF PANEL */
+.gif-panel{
+  display:none;
+  background:#0b1025;
+  padding:10px;
+  gap:10px;
+  overflow-x:auto;
+}
+
+.gif-panel img{
+  height:80px;
+  border-radius:12px;
+  cursor:pointer;
+}
