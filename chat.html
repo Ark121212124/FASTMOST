@@ -1,87 +1,221 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>FASTMOST · Chat</title>
 
-  <!-- ТВОИ СТИЛИ -->
+  <!-- СТИЛИ -->
   <link rel="stylesheet" href="styles.css">
 
-  <!-- Emoji Picker -->
-  <script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js" defer></script>
+  <!-- EMOJI PICKER -->
+  <script type="module"
+    src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js">
+  </script>
 
-  <!-- Firebase (если уже используешь) -->
-  <script type="module" src="chat.js" defer></script>
+  <!-- FIREBASE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      query,
+      orderBy,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "ТВОЙ_API_KEY",
+      authDomain: "ТВОЙ.firebaseapp.com",
+      projectId: "ТВОЙ_ID",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.fs = { collection, addDoc, query, orderBy, onSnapshot };
+  </script>
 </head>
+
 <body>
 
 <!-- HEADER -->
-<header class="chat-header">
+<div class="chat-header">
   <a href="index.html" class="back-btn">← Назад</a>
-  <span class="chat-title">FASTMOST · Chat</span>
-</header>
+  <strong>FASTMOST · Chat</strong>
+  <button id="voiceBtn">🎤 Voice</button>
+</div>
 
 <!-- MESSAGES -->
-<main class="chat-messages" id="messages"></main>
+<div class="chat-messages" id="messages"></div>
 
-<!-- EMOJI PICKER (СКРЫТ) -->
+<!-- REPLY PREVIEW -->
+<div class="reply-preview hidden" id="replyPreview"></div>
+
+<!-- EMOJI PANEL -->
 <div class="emoji-panel hidden" id="emojiPanel">
   <emoji-picker></emoji-picker>
 </div>
 
-<!-- CHAT INPUT (ВСЕГДА ВНИЗУ) -->
-<footer class="chat-input">
-  <button id="emojiBtn" class="emoji-btn">🙂</button>
+<!-- GIF PANEL -->
+<div class="gif-panel hidden" id="gifPanel">
+  <img src="https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif">
+  <img src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif">
+  <img src="https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif">
+  <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif">
+  <img src="https://media.giphy.com/media/26BRrSvJUa0crqw4E/giphy.gif">
+</div>
 
-  <input
-    type="text"
-    id="messageInput"
-    placeholder="Сообщение..."
-    autocomplete="off"
-  />
+<!-- CHAT INPUT -->
+<div class="chat-input">
 
-  <button id="sendBtn" class="send-btn">➤</button>
-</footer>
+  <button class="emoji-btn" id="emojiBtn">😃</button>
+  <button class="emoji-btn" id="gifBtn">GIF</button>
 
-<!-- LOGIC -->
-<script>
-  const messages = document.getElementById("messages");
-  const input = document.getElementById("messageInput");
-  const sendBtn = document.getElementById("sendBtn");
-  const emojiBtn = document.getElementById("emojiBtn");
-  const emojiPanel = document.getElementById("emojiPanel");
-  const picker = document.querySelector("emoji-picker");
+  <input id="messageInput" placeholder="Сообщение...">
 
-  // Показ / скрытие эмодзи
-  emojiBtn.onclick = () => {
-    emojiPanel.classList.toggle("hidden");
-  };
+  <button id="sendBtn">➤</button>
+</div>
 
-  // Вставка эмодзи
-  picker.addEventListener("emoji-click", e => {
+<!-- VOICE OVERLAY -->
+<div class="voice-overlay hidden" id="voiceOverlay">
+  <button class="close-voice" onclick="closeVoice()">✖</button>
+  <div id="jitsi"></div>
+</div>
+
+<!-- SCRIPT -->
+<script type="module">
+const messages = document.getElementById("messages");
+const input = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
+
+const emojiBtn = document.getElementById("emojiBtn");
+const emojiPanel = document.getElementById("emojiPanel");
+
+const gifBtn = document.getElementById("gifBtn");
+const gifPanel = document.getElementById("gifPanel");
+
+const replyPreview = document.getElementById("replyPreview");
+
+const voiceBtn = document.getElementById("voiceBtn");
+const voiceOverlay = document.getElementById("voiceOverlay");
+
+const roomId = new URLSearchParams(location.search).get("room") || "global";
+
+let replyText = null;
+
+/* SEND MESSAGE */
+async function sendMessage(text){
+  if(!text.trim()) return;
+
+  await fs.addDoc(
+    fs.collection(db,"rooms",roomId,"messages"),
+    {
+      text,
+      replyTo: replyText,
+      user: "Ты",
+      createdAt: Date.now()
+    }
+  );
+
+  input.value = "";
+  replyText = null;
+  replyPreview.classList.add("hidden");
+}
+
+sendBtn.onclick = ()=> sendMessage(input.value);
+input.addEventListener("keydown",e=>{
+  if(e.key==="Enter") sendMessage(input.value);
+});
+
+/* LOAD MESSAGES */
+const q = fs.query(
+  fs.collection(db,"rooms",roomId,"messages"),
+  fs.orderBy("createdAt")
+);
+
+fs.onSnapshot(q,snap=>{
+  messages.innerHTML="";
+  snap.forEach(doc=>{
+    renderMessage(doc.id,doc.data());
+  });
+  messages.scrollTop = messages.scrollHeight;
+});
+
+/* RENDER MESSAGE */
+function renderMessage(id,data){
+  const div = document.createElement("div");
+  div.className = "message";
+
+  div.innerHTML = `
+    ${data.replyTo ? `<div class="reply-ref">↪ ${data.replyTo}</div>` : ""}
+    <div class="text">${data.text}</div>
+    <div class="msg-actions">
+      <button onclick="reply('${data.text}')">↩</button>
+      <button onclick="react('${id}','❤️')">❤️</button>
+      <button onclick="react('${id}','😂')">😂</button>
+    </div>
+  `;
+
+  messages.appendChild(div);
+}
+
+/* REPLY */
+window.reply = (text)=>{
+  replyText = text;
+  replyPreview.textContent = "Ответ: " + text;
+  replyPreview.classList.remove("hidden");
+};
+
+/* REACTIONS */
+window.react = async (id,emoji)=>{
+  await fs.addDoc(
+    fs.collection(db,"rooms",roomId,"messages",id,"reactions"),
+    { emoji }
+  );
+};
+
+/* EMOJI */
+emojiBtn.onclick = ()=>{
+  emojiPanel.classList.toggle("hidden");
+  gifPanel.classList.add("hidden");
+};
+
+document.querySelector("emoji-picker")
+  .addEventListener("emoji-click",e=>{
     input.value += e.detail.unicode;
-    input.focus();
   });
 
-  // Отправка сообщения
-  function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
+/* GIFS */
+gifBtn.onclick = ()=>{
+  gifPanel.classList.toggle("hidden");
+  emojiPanel.classList.add("hidden");
+};
 
-    const msg = document.createElement("div");
-    msg.className = "message";
-    msg.textContent = text;
+gifPanel.querySelectorAll("img").forEach(img=>{
+  img.onclick = ()=>{
+    sendMessage(`<img src="${img.src}" class="gif-msg">`);
+    gifPanel.classList.add("hidden");
+  };
+});
 
-    messages.appendChild(msg);
-    messages.scrollTop = messages.scrollHeight;
-    input.value = "";
-  }
+/* VOICE */
+voiceBtn.onclick = ()=>{
+  voiceOverlay.classList.remove("hidden");
 
-  sendBtn.onclick = sendMessage;
-
-  input.addEventListener("keydown", e => {
-    if (e.key === "Enter") sendMessage();
+  new JitsiMeetExternalAPI("meet.jit.si",{
+    roomName:"FASTMOST_"+roomId,
+    parentNode:document.getElementById("jitsi"),
+    width:"100%",
+    height:"100%"
   });
+};
+
+window.closeVoice = ()=>{
+  voiceOverlay.classList.add("hidden");
+  document.getElementById("jitsi").innerHTML="";
+};
 </script>
 
 </body>
