@@ -1,80 +1,236 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Admin • FASTMOST</title>
+<title>FASTMOST • Админка</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-body{
-  margin:0;
-  background:#0b0e14;
-  color:white;
-  font-family:Inter;
+:root{
+  --bg:#0b0e14;
+  --panel:#141827;
+  --accent:#5865f2;
+  --danger:#e74c3c;
+  --text:#e6e8f0;
+  --muted:#8b90b3;
 }
-header{
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  height:100%;
+  font-family:Inter,system-ui;
+  background:radial-gradient(circle at top,#1b1f3b,#0b0e14);
+  color:var(--text);
+}
+
+/* LAYOUT */
+.app{
+  display:flex;
+  height:100vh;
+}
+
+/* SIDEBAR */
+.sidebar{
+  width:260px;
+  background:rgba(20,24,39,.8);
+  backdrop-filter:blur(18px);
   padding:20px;
-  background:#141827;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.logo{
+  font-size:22px;
+  font-weight:800;
+}
+.btn{
+  background:var(--accent);
+  border:none;
+  padding:14px;
+  border-radius:14px;
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
+.btn.secondary{background:#2a2f55}
+.btn.danger{background:var(--danger)}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:scale(.96)}
+
+/* MAIN */
+.main{
+  flex:1;
+  padding:32px;
+  overflow:auto;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:18px;
+}
+.card{
+  background:rgba(20,24,39,.85);
+  backdrop-filter:blur(14px);
+  border-radius:20px;
+  padding:20px;
+  animation:fadeUp .35s ease;
+}
+.card h3{
+  margin:0 0 12px;
+}
+.stat{
+  font-size:34px;
+  font-weight:800;
+}
+.muted{color:var(--muted)}
+
+.room{
   display:flex;
   justify-content:space-between;
+  align-items:center;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:8px;
+  background:#1a1f3b;
 }
-section{padding:20px}
-.card{
-  background:#141827;
-  padding:16px;
-  border-radius:14px;
-  margin-bottom:14px;
+.room:hover{
+  background:#222760;
 }
-button{
-  background:#e74c3c;
-  border:none;
-  padding:6px 12px;
-  border-radius:8px;
-  color:white;
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
 }
 </style>
 </head>
+
 <body>
 
-<header>
-  <b>🛠 Админ-панель</b>
-  <button onclick="location.href='index.html'">Назад</button>
-</header>
+<div class="app">
 
-<section>
-  <div class="card">
-    <h3>📊 Статистика</h3>
-    <div id="stats"></div>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">🛠 FASTMOST</div>
+    <button class="btn secondary" onclick="location.href='index.html'">← Назад</button>
   </div>
 
-  <div class="card">
-    <h3>🧹 Комнаты</h3>
-    <div id="rooms"></div>
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- STATS -->
+    <div class="grid">
+
+      <div class="card">
+        <h3>👥 Пользователи</h3>
+        <div class="stat" id="usersCount">0</div>
+        <div class="muted">Всего</div>
+      </div>
+
+      <div class="card">
+        <h3>🟢 Онлайн</h3>
+        <div class="stat" id="onlineCount">0</div>
+        <div class="muted">Сейчас</div>
+      </div>
+
+      <div class="card">
+        <h3>💬 Комнаты</h3>
+        <div class="stat" id="roomsCount">0</div>
+        <div class="muted">Всего</div>
+      </div>
+
+    </div>
+
+    <br>
+
+    <!-- CHART -->
+    <div class="card">
+      <h3>📊 Онлайн / Оффлайн</h3>
+      <canvas id="onlineChart" height="120"></canvas>
+    </div>
+
+    <br>
+
+    <!-- ROOMS -->
+    <div class="card">
+      <h3>🧹 Управление комнатами</h3>
+      <div id="rooms"></div>
+    </div>
+
   </div>
-</section>
+
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore,collection,onSnapshot,deleteDoc,doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,collection,onSnapshot,deleteDoc,doc,getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const app=initializeApp({
+const app = initializeApp({
   apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
+  authDomain:"fastmost-f8084.firebaseapp.com",
   projectId:"fastmost-f8084"
 });
-const db=getFirestore();
+const auth = getAuth();
+const db = getFirestore();
 
-onSnapshot(collection(db,"users"),s=>{
-  stats.innerText="Пользователей: "+s.size;
+let chart;
+
+/* 🔐 AUTH + ROLE CHECK */
+onAuthStateChanged(auth, async user=>{
+  if(!user){
+    location.href="index.html";
+    return;
+  }
+  const snap = await getDoc(doc(db,"users",user.uid));
+  if(!snap.exists() || snap.data().role !== "admin"){
+    location.href="index.html";
+  }
 });
 
-onSnapshot(collection(db,"rooms"),snap=>{
+/* 👥 USERS / ONLINE */
+onSnapshot(collection(db,"users"), snap=>{
+  usersCount.innerText = snap.size;
+  const online = snap.docs.filter(d=>d.data().online).length;
+  onlineCount.innerText = online;
+
+  if(!chart){
+    chart = new Chart(onlineChart,{
+      type:"doughnut",
+      data:{
+        labels:["Онлайн","Оффлайн"],
+        datasets:[{
+          data:[online, snap.size-online],
+          backgroundColor:["#3ba55d","#747f8d"]
+        }]
+      }
+    });
+  }else{
+    chart.data.datasets[0].data = [online, snap.size-online];
+    chart.update();
+  }
+});
+
+/* 💬 ROOMS */
+onSnapshot(collection(db,"rooms"), snap=>{
+  roomsCount.innerText = snap.size;
   rooms.innerHTML="";
   snap.forEach(d=>{
     const div=document.createElement("div");
-    div.innerHTML=`${d.data().name} <button onclick="del('${d.id}')">Удалить</button>`;
+    div.className="room";
+    div.innerHTML=`
+      <span>${d.data().name}</span>
+      <button class="btn danger" onclick="delRoom('${d.id}')">Удалить</button>
+    `;
     rooms.appendChild(div);
   });
 });
 
-window.del=async(id)=>{
+window.delRoom = async(id)=>{
   if(confirm("Удалить комнату?")){
     await deleteDoc(doc(db,"rooms",id));
   }
