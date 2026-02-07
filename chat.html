@@ -1,110 +1,33 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>Chat</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<style>
-:root{
-  --bg:#070b1a;
-  --panel:#111737;
-  --accent:#6c7cff;
-}
-*{box-sizing:border-box;font-family:Inter,system-ui}
-body{
-  margin:0;
-  background:radial-gradient(1000px 600px at top,#182061,#050710);
-  color:#fff;
-  display:flex;
-  flex-direction:column;
-  height:100vh;
-}
-header{
-  padding:14px;
-  background:rgba(0,0,0,.4);
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-header button{
-  background:var(--accent);
-  border:none;
-  border-radius:10px;
-  padding:8px 12px;
-  color:#fff;
-}
-#messages{
-  flex:1;
-  padding:20px;
-  overflow-y:auto;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-.msg{
-  background:var(--panel);
-  padding:10px 14px;
-  border-radius:14px;
-  max-width:70%;
-}
-.me{align-self:flex-end;background:#1c265c}
-.footer{
-  padding:10px;
-  background:rgba(0,0,0,.6);
-  display:flex;
-  gap:8px;
-}
-.footer input{
-  flex:1;
-  padding:12px;
-  border-radius:12px;
-  border:none;
-  background:#0e1430;
-  color:#fff;
-}
-.footer button{
-  border:none;
-  border-radius:12px;
-  padding:0 14px;
-  background:var(--accent);
-  color:#fff;
-}
-.gif-panel{
-  display:none;
-  padding:10px;
-  background:#0b1025;
-  gap:10px;
-  overflow-x:auto;
-}
-.gif-panel img{
-  height:80px;
-  border-radius:10px;
-  cursor:pointer;
-}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body style="display:flex;flex-direction:column;height:100vh">
 
-<header>
+<div class="chat-header">
   <button onclick="history.back()">← Назад</button>
   FASTMOST · Chat
-</header>
+</div>
 
-<div id="messages"></div>
+<div id="messages" class="chat-body"></div>
 
-<div class="gif-panel" id="gifs"></div>
+<div id="gifs" class="gif-panel"></div>
 
-<div class="footer">
-  <button onclick="toggleEmoji()">😊</button>
+<div class="chat-footer">
+  <button onclick="addEmoji()">😊</button>
   <button onclick="toggleGif()">GIF</button>
-  <input id="text" placeholder="Сообщение...">
+  <input id="text" placeholder="Сообщение…">
   <button onclick="send()">➤</button>
 </div>
 
 <script>
-const room = new URLSearchParams(location.search).get('room');
-const key = 'chat_'+room;
-const msgs = JSON.parse(localStorage.getItem(key)||'[]');
+const room=new URLSearchParams(location.search).get('room');
+const key='chat_'+room;
+const msgs=JSON.parse(localStorage.getItem(key)||'[]');
 
 function save(){localStorage.setItem(key,JSON.stringify(msgs));}
 
@@ -112,7 +35,7 @@ function render(){
   messages.innerHTML='';
   msgs.forEach(m=>{
     const d=document.createElement('div');
-    d.className='msg me';
+    d.className='message me';
     d.innerHTML=m;
     messages.appendChild(d);
   });
@@ -121,13 +44,13 @@ function render(){
 render();
 
 function send(){
-  if(!text.value.trim()) return;
+  if(!text.value.trim())return;
   msgs.push(text.value);
   text.value='';
   save();render();
 }
 
-function toggleEmoji(){
+function addEmoji(){
   text.value+='😊';
   text.focus();
 }
@@ -144,7 +67,7 @@ function toggleGif(){
     const img=document.createElement('img');
     img.src=url;
     img.onclick=()=>{
-      msgs.push(`<img src="${url}" style="max-width:200px;border-radius:12px">`);
+      msgs.push(`<img src="${url}" style="max-width:220px;border-radius:14px">`);
       save();render();
       gifs.style.display='none';
     };
@@ -153,5 +76,6 @@ function toggleGif(){
   gifs.style.display=gifs.style.display==='flex'?'none':'flex';
 }
 </script>
+
 </body>
 </html>
