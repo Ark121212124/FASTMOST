@@ -5,196 +5,283 @@
 <title>FASTMOST</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5865f2">
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendEmailVerification,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-/* ================= CONFIG ================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
-  authDomain: "fastmost-f8084.firebaseapp.com",
-  projectId: "fastmost-f8084",
-  messagingSenderId: "153310068244",
-  appId: "1:153310068244:web:f0cce97ba520da38dc3101"
-};
-
-const LOGO = "https://i.imgur.com/8Km9tLL.png";
-
-/* ================= INIT ================= */
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-/* ================= HELPERS ================= */
-function gravatar(email){
-  return "https://www.gravatar.com/avatar/" +
-    CryptoJS.MD5(email.trim().toLowerCase()).toString() +
-    "?d=identicon&s=120";
-}
-
-/* ================= AUTH ================= */
-window.register = async () => {
-  try {
-    const email = emailInput.value.trim();
-    const pass = passwordInput.value.trim();
-    if(!email || !pass) return alert("Введите email и пароль");
-
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    await sendEmailVerification(cred.user);
-
-    await setDoc(doc(db,"users",cred.user.uid),{
-      email,
-      avatar: gravatar(email),
-      profileDone: false
-    });
-
-    alert("Подтвердите email и войдите");
-  } catch(e){
-    alert(e.message);
-  }
-};
-
-window.login = async () => {
-  try {
-    await signInWithEmailAndPassword(
-      auth,
-      emailInput.value.trim(),
-      passwordInput.value.trim()
-    );
-  } catch(e){
-    alert(e.message);
-  }
-};
-
-window.logout = async () => {
-  await signOut(auth);
-  location.reload();
-};
-
-/* ================= AVATAR ================= */
-window.saveAvatar = async () => {
-  try {
-    const user = auth.currentUser;
-    const url = avatarUrl.value.trim();
-    const avatar = url || gravatar(user.email);
-
-    await setDoc(doc(db,"users",user.uid),{
-      avatar,
-      profileDone:true
-    },{merge:true});
-
-    showMain(user.email, avatar);
-  } catch(e){
-    alert(e.message);
-  }
-};
-
-/* ================= UI ================= */
-function showAuth(){
-  authBox.style.display="flex";
-  profileBox.style.display="none";
-  mainBox.style.display="none";
-}
-
-function showProfile(avatar,email){
-  authBox.style.display="none";
-  profileBox.style.display="flex";
-  mainBox.style.display="none";
-  avatarImg.src = avatar;
-  profileEmail.innerText = email;
-}
-
-function showMain(email,avatar){
-  authBox.style.display="none";
-  profileBox.style.display="none";
-  mainBox.style.display="flex";
-  mainAvatar.src = avatar;
-  mainEmail.innerText = email;
-}
-
-/* ================= STATE ================= */
-onAuthStateChanged(auth, async user => {
-  logo1.src = logo2.src = logo3.src = LOGO;
-
-  if(!user) return showAuth();
-  if(!user.emailVerified) return alert("Подтвердите email");
-
-  const snap = await getDoc(doc(db,"users",user.uid));
-  const data = snap.data();
-  const avatar = data.avatar || gravatar(user.email);
-
-  data.profileDone
-    ? showMain(user.email, avatar)
-    : showProfile(avatar, user.email);
-});
-</script>
+<!-- Libs -->
+<script src="https://meet.jit.si/external_api.js"></script>
 
 <style>
-body{margin:0;background:#0b0e14;color:white;font-family:Inter}
-.center{min-height:100vh;display:flex;align-items:center;justify-content:center}
-.card{background:#141827;padding:32px;border-radius:18px;width:360px;text-align:center}
-.logo{width:64px}
-.brand{font-size:28px;font-weight:900;color:#6b7cff}
-input,button{width:100%;padding:14px;margin-top:12px;border-radius:12px;border:none}
-input{background:#0f1324;color:white;border:1px solid #242a45}
-button{background:#6b7cff;color:white;cursor:pointer}
-.avatar{width:96px;height:96px;border-radius:50%;border:2px solid #6b7cff;margin:12px auto}
+/* ===== RESET ===== */
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  height:100vh;
+  background:radial-gradient(circle at top,#1e2233,#0b0e14);
+  font-family:Inter,system-ui;
+  color:#fff;
+  overflow:hidden;
+}
+
+/* ===== ANIMATIONS ===== */
+.fade{animation:fade .4s ease}
+@keyframes fade{from{opacity:0;transform:scale(.97)}to{opacity:1}}
+
+.blur{
+  backdrop-filter:blur(14px);
+  background:rgba(20,24,39,.85);
+}
+
+/* ===== LAYOUT ===== */
+#app{
+  display:grid;
+  grid-template-columns:72px 260px 1fr 240px;
+  height:100vh;
+}
+
+.sidebar, .rooms, .users{background:#151622}
+.sidebar{padding:10px}
+.rooms{padding:12px}
+.users{padding:12px}
+
+/* ===== SIDEBAR ===== */
+.logo{
+  font-weight:900;
+  text-align:center;
+  color:#5865f2;
+  margin-bottom:14px;
+}
+
+/* ===== ROOMS ===== */
+.room{
+  padding:8px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:.2s;
+}
+.room:hover{
+  background:#5865f2;
+}
+
+/* ===== CHAT ===== */
+.chat{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+.header{
+  padding:14px;
+  border-bottom:1px solid #222;
+}
+.messages{
+  flex:1;
+  overflow:auto;
+  padding:14px;
+}
+.msg{
+  margin-bottom:10px;
+}
+.input{
+  display:flex;
+  gap:10px;
+  padding:10px;
+}
+.input input{
+  flex:1;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  background:#0f1324;
+  color:white;
+}
+.input button{
+  padding:12px 18px;
+  border:none;
+  border-radius:10px;
+  background:#5865f2;
+  color:white;
+}
+
+/* ===== USERS ===== */
+.user{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:6px;
+}
+.status{
+  width:8px;height:8px;border-radius:50%;
+}
+.online{background:#3ba55d}
+.offline{background:#555}
+
+/* ===== NOTIFICATION ===== */
+.toast{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#5865f2;
+  padding:14px 18px;
+  border-radius:12px;
+  animation:fade .3s;
+}
 </style>
 </head>
 
 <body>
 
-<!-- AUTH -->
-<div id="authBox" class="center">
-  <div class="card">
-    <img id="logo1" class="logo">
-    <div class="brand">FASTMOST</div>
-    <input id="emailInput" placeholder="Email">
-    <input id="passwordInput" type="password" placeholder="Пароль">
-    <button onclick="register()">Регистрация</button>
-    <button onclick="login()">Войти</button>
+<div id="app" class="fade">
+
+  <!-- ICON BAR -->
+  <div class="sidebar blur">
+    <div class="logo">FM</div>
   </div>
+
+  <!-- ROOMS -->
+  <div class="rooms blur">
+    <h3>Комнаты</h3>
+    <input id="roomName" placeholder="Новая комната" style="width:100%;margin:10px 0">
+    <button onclick="createRoom()">Создать</button>
+    <div id="roomList"></div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat blur">
+    <div class="header" id="roomTitle">Выберите комнату</div>
+    <div class="messages" id="messages"></div>
+    <div class="input">
+      <input id="message" placeholder="Сообщение">
+      <button onclick="sendMessage()">➤</button>
+    </div>
+    <div id="voice"></div>
+  </div>
+
+  <!-- USERS -->
+  <div class="users blur">
+    <h3>Участники</h3>
+    <div id="users"></div>
+  </div>
+
 </div>
 
-<!-- PROFILE -->
-<div id="profileBox" class="center" style="display:none">
-  <div class="card">
-    <img id="logo2" class="logo">
-    <div class="brand">FASTMOST</div>
-    <img id="avatarImg" class="avatar">
-    <input id="avatarUrl" placeholder="Ссылка на аватар">
-    <button onclick="saveAvatar()">Сохранить и продолжить</button>
-    <p id="profileEmail"></p>
-  </div>
-</div>
+<script type="module">
+/* ===== FIREBASE ===== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<!-- MAIN -->
-<div id="mainBox" class="center" style="display:none">
-  <div class="card">
-    <img id="logo3" class="logo">
-    <div class="brand">FASTMOST</div>
-    <img id="mainAvatar" class="avatar">
-    <p id="mainEmail"></p>
-    <button onclick="alert('Комнаты скоро')">➕ Создать комнату</button>
-    <button onclick="logout()">Выйти</button>
-  </div>
-</div>
+const app = initializeApp({
+  apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
+  authDomain:"fastmost-f8084.firebaseapp.com",
+  projectId:"fastmost-f8084"
+});
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentRoom=null;
+let username="User"+Math.floor(Math.random()*9999);
+
+/* ===== ONLINE STATUS ===== */
+onAuthStateChanged(auth,u=>{
+  if(!u){
+    signInAnonymously(auth);
+    return;
+  }
+  setDoc(doc(db,"users",u.uid),{
+    name:username,
+    online:true,
+    role:"user"
+  });
+});
+
+/* ===== ROOMS ===== */
+window.createRoom = async ()=>{
+  if(!roomName.value) return;
+  await addDoc(collection(db,"rooms"),{name:roomName.value});
+  roomName.value="";
+};
+
+onSnapshot(collection(db,"rooms"),snap=>{
+  roomList.innerHTML="";
+  snap.forEach(d=>{
+    const r=document.createElement("div");
+    r.className="room";
+    r.innerText="# "+d.data().name;
+    r.onclick=()=>enterRoom(d.id,d.data().name);
+    roomList.appendChild(r);
+  });
+});
+
+/* ===== ENTER ROOM ===== */
+function enterRoom(id,name){
+  currentRoom=id;
+  roomTitle.innerText="# "+name;
+  messages.innerHTML="";
+  startChat();
+  startVoice();
+}
+
+/* ===== CHAT ===== */
+function startChat(){
+  onSnapshot(query(collection(db,"rooms",currentRoom,"messages"),orderBy("time")),snap=>{
+    messages.innerHTML="";
+    snap.forEach(d=>{
+      const m=d.data();
+      messages.innerHTML+=`<div class="msg"><b>${m.user}</b>: ${m.text}</div>`;
+    });
+    messages.scrollTop=messages.scrollHeight;
+  });
+}
+
+window.sendMessage = async ()=>{
+  if(!message.value) return;
+  await addDoc(collection(db,"rooms",currentRoom,"messages"),{
+    user:username,
+    text:message.value,
+    time:serverTimestamp()
+  });
+  notify("Новое сообщение");
+  message.value="";
+};
+
+/* ===== USERS ===== */
+onSnapshot(collection(db,"users"),snap=>{
+  users.innerHTML="";
+  snap.forEach(d=>{
+    const u=d.data();
+    users.innerHTML+=`
+      <div class="user">
+        <div class="status ${u.online?"online":"offline"}"></div>
+        ${u.name} ${u.role==="admin"?"⭐":""}
+      </div>`;
+  });
+});
+
+/* ===== VOICE ===== */
+function startVoice(){
+  voice.innerHTML="";
+  new JitsiMeetExternalAPI("meet.jit.si",{
+    roomName:"FASTMOST_"+currentRoom,
+    parentNode:voice,
+    height:240
+  });
+}
+
+/* ===== NOTIFY ===== */
+function notify(text){
+  if(Notification.permission==="granted"){
+    new Notification("FASTMOST",{body:text});
+  }
+  const t=document.createElement("div");
+  t.className="toast";
+  t.innerText=text;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+
+Notification.requestPermission();
+</script>
 
 </body>
 </html>
