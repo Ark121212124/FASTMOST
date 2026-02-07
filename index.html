@@ -5,11 +5,11 @@
 <title>FASTMOST</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- CryptoJS для Gravatar -->
+<!-- Gravatar / MD5 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <script type="module">
-/* ===== Firebase imports ===== */
+/* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getAuth,
@@ -27,7 +27,7 @@ import {
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* ===== Firebase config (ТВОИ КЛЮЧИ) ===== */
+/* ================= CONFIG ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
   authDomain: "fastmost-f8084.firebaseapp.com",
@@ -38,37 +38,59 @@ const firebaseConfig = {
   measurementId: "G-QJFEKWN6HS"
 };
 
-/* ===== Init ===== */
+/* ===== LOGO (МОЖНО ЗАМЕНИТЬ) ===== */
+const FASTMOST_LOGO_URL = "https://i.imgur.com/8Km9tLL.png";
+
+/* ================= INIT ================= */
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* ===== Utils ===== */
+/* ================= HELPERS ================= */
 function gravatar(email){
   return "https://www.gravatar.com/avatar/" +
     CryptoJS.MD5(email.trim().toLowerCase()).toString() +
     "?d=identicon&s=120";
 }
 
-/* ===== Auth actions ===== */
+/* ================= AUTH ================= */
 window.register = async () => {
   const email = emailInput.value.trim();
   const pass = passwordInput.value.trim();
   if(!email || !pass) return alert("Введите email и пароль");
 
-  const cred = await createUserWithEmailAndPassword(auth, email, pass);
-  await sendEmailVerification(cred.user);
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await sendEmailVerification(cred.user);
 
-  await setDoc(doc(db,"users",cred.user.uid),{
-    email,
-    avatar: gravatar(email)
-  });
+    await setDoc(doc(db,"users",cred.user.uid),{
+      email,
+      avatar: gravatar(email)
+    });
 
-  alert("Письмо подтверждения отправлено на почту");
+    alert("Письмо подтверждения отправлено на почту");
+  } catch(e){
+    alert("Ошибка регистрации:\n" + e.message);
+  }
 };
 
 window.login = async () => {
-  await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      emailInput.value.trim(),
+      passwordInput.value.trim()
+    );
+  } catch (e) {
+    alert(
+      "Ошибка входа:\n" +
+      (e.code === "auth/wrong-password" ? "Неверный пароль" :
+       e.code === "auth/user-not-found" ? "Пользователь не найден" :
+       e.code === "auth/invalid-email" ? "Некорректный email" :
+       e.code === "auth/too-many-requests" ? "Слишком много попыток. Попробуйте позже" :
+       e.message)
+    );
+  }
 };
 
 window.logout = async () => {
@@ -76,11 +98,11 @@ window.logout = async () => {
   location.reload();
 };
 
-/* ===== Save avatar ===== */
+/* ================= AVATAR ================= */
 window.saveAvatar = async () => {
   const user = auth.currentUser;
   const url = avatarUrl.value.trim();
-  const avatar = url ? url : gravatar(user.email);
+  const avatar = url || gravatar(user.email);
 
   await setDoc(doc(db,"users",user.uid),{
     avatar
@@ -89,8 +111,10 @@ window.saveAvatar = async () => {
   avatarImg.src = avatar;
 };
 
-/* ===== Auth state ===== */
+/* ================= STATE ================= */
 onAuthStateChanged(auth, async user => {
+  logoImg.src = FASTMOST_LOGO_URL;
+
   if(!user){
     authBox.style.display="flex";
     appBox.style.display="none";
@@ -136,8 +160,13 @@ body{
   box-shadow:0 30px 80px rgba(0,0,0,.6);
 }
 
+.logo{
+  width:64px;
+  margin-bottom:8px;
+}
+
 .brand{
-  font-size:32px;
+  font-size:28px;
   font-weight:900;
   color:#6b7cff;
   margin-bottom:10px;
@@ -179,6 +208,7 @@ button{
 <!-- AUTH -->
 <div id="authBox" class="center">
   <div class="card">
+    <img id="logoImg" class="logo">
     <div class="brand">FASTMOST</div>
     <input id="emailInput" placeholder="Email">
     <input id="passwordInput" type="password" placeholder="Пароль">
@@ -190,6 +220,7 @@ button{
 <!-- APP -->
 <div id="appBox" class="center" style="display:none">
   <div class="card">
+    <img id="logoImg" class="logo">
     <div class="brand">FASTMOST</div>
 
     <img id="avatarImg" class="avatar">
