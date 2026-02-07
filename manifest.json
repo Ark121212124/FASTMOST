@@ -1,8 +1,9 @@
 {
-  "name": "FASTMOST",
-  "short_name": "FASTMOST",
-  "start_url": "landing.html",
-  "display": "standalone",
-  "background_color": "#0b0e14",
-  "theme_color": "#5865f2"
+  "name":"FASTMOST",
+  "short_name":"FASTMOST",
+  "start_url":"index.html",
+  "display":"standalone",
+  "background_color":"#0b0e14",
+  "theme_color":"#5865f2"
 }
+
