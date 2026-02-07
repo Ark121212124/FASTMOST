@@ -5,11 +5,9 @@
 <title>FASTMOST</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- MD5 для Gravatar -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <script type="module">
-/* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getAuth,
@@ -36,7 +34,7 @@ const firebaseConfig = {
   appId: "1:153310068244:web:f0cce97ba520da38dc3101"
 };
 
-const FASTMOST_LOGO_URL = "https://i.imgur.com/8Km9tLL.png";
+const LOGO = "https://i.imgur.com/8Km9tLL.png";
 
 /* ================= INIT ================= */
 const app = initializeApp(firebaseConfig);
@@ -62,12 +60,13 @@ window.register = async () => {
 
     await setDoc(doc(db,"users",cred.user.uid),{
       email,
-      avatar: gravatar(email)
+      avatar: gravatar(email),
+      profileDone: false
     });
 
-    alert("Письмо подтверждения отправлено на почту");
+    alert("Подтвердите email и войдите");
   } catch(e){
-    alert("Ошибка регистрации:\n" + e.message);
+    alert(e.message);
   }
 };
 
@@ -79,7 +78,7 @@ window.login = async () => {
       passwordInput.value.trim()
     );
   } catch(e){
-    alert("Ошибка входа:\n" + e.message);
+    alert(e.message);
   }
 };
 
@@ -88,115 +87,83 @@ window.logout = async () => {
   location.reload();
 };
 
-/* ================= AVATAR (ИСПРАВЛЕНО) ================= */
+/* ================= AVATAR ================= */
 window.saveAvatar = async () => {
   try {
     const user = auth.currentUser;
-    const input = document.getElementById("avatarUrl");
-    const url = input.value.trim();
-
-    if(!url && !user.email){
-      return alert("Введите ссылку на аватар");
-    }
-
+    const url = avatarUrl.value.trim();
     const avatar = url || gravatar(user.email);
 
-    await setDoc(
-      doc(db,"users",user.uid),
-      { avatar },
-      { merge:true }
-    );
+    await setDoc(doc(db,"users",user.uid),{
+      avatar,
+      profileDone:true
+    },{merge:true});
 
-    avatarImg.src = avatar;
-    input.value = "";
-    alert("Аватар сохранён ✅");
+    showMain(user.email, avatar);
   } catch(e){
-    alert("Ошибка сохранения аватара:\n" + e.message);
+    alert(e.message);
   }
 };
 
+/* ================= UI ================= */
+function showAuth(){
+  authBox.style.display="flex";
+  profileBox.style.display="none";
+  mainBox.style.display="none";
+}
+
+function showProfile(avatar,email){
+  authBox.style.display="none";
+  profileBox.style.display="flex";
+  mainBox.style.display="none";
+  avatarImg.src = avatar;
+  profileEmail.innerText = email;
+}
+
+function showMain(email,avatar){
+  authBox.style.display="none";
+  profileBox.style.display="none";
+  mainBox.style.display="flex";
+  mainAvatar.src = avatar;
+  mainEmail.innerText = email;
+}
+
 /* ================= STATE ================= */
 onAuthStateChanged(auth, async user => {
-  logoImg.src = FASTMOST_LOGO_URL;
+  logo1.src = logo2.src = logo3.src = LOGO;
 
-  if(!user){
-    authBox.style.display="flex";
-    appBox.style.display="none";
-    return;
-  }
-
-  if(!user.emailVerified){
-    alert("Подтвердите email и обновите страницу");
-    return;
-  }
-
-  authBox.style.display="none";
-  appBox.style.display="flex";
-  userEmail.innerText = user.email;
+  if(!user) return showAuth();
+  if(!user.emailVerified) return alert("Подтвердите email");
 
   const snap = await getDoc(doc(db,"users",user.uid));
-  avatarImg.src = snap.exists()
-    ? snap.data().avatar
-    : gravatar(user.email);
+  const data = snap.data();
+  const avatar = data.avatar || gravatar(user.email);
+
+  data.profileDone
+    ? showMain(user.email, avatar)
+    : showProfile(avatar, user.email);
 });
 </script>
 
 <style>
-body{
-  margin:0;
-  background:#0b0e14;
-  color:white;
-  font-family:Inter,Segoe UI,Arial;
-}
-.center{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.card{
-  background:#141827;
-  padding:32px;
-  border-radius:18px;
-  width:100%;
-  max-width:380px;
-  text-align:center;
-}
-.logo{width:64px;margin-bottom:6px}
+body{margin:0;background:#0b0e14;color:white;font-family:Inter}
+.center{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#141827;padding:32px;border-radius:18px;width:360px;text-align:center}
+.logo{width:64px}
 .brand{font-size:28px;font-weight:900;color:#6b7cff}
-input{
-  width:100%;
-  padding:14px;
-  margin-top:12px;
-  border-radius:12px;
-  border:1px solid #242a45;
-  background:#0f1324;
-  color:white;
-}
-button{
-  width:100%;
-  padding:14px;
-  margin-top:14px;
-  border:none;
-  border-radius:12px;
-  background:#6b7cff;
-  color:white;
-}
-.avatar{
-  width:96px;
-  height:96px;
-  border-radius:50%;
-  margin:10px auto;
-  border:2px solid #6b7cff;
-}
+input,button{width:100%;padding:14px;margin-top:12px;border-radius:12px;border:none}
+input{background:#0f1324;color:white;border:1px solid #242a45}
+button{background:#6b7cff;color:white;cursor:pointer}
+.avatar{width:96px;height:96px;border-radius:50%;border:2px solid #6b7cff;margin:12px auto}
 </style>
 </head>
 
 <body>
 
+<!-- AUTH -->
 <div id="authBox" class="center">
   <div class="card">
-    <img id="logoImg" class="logo">
+    <img id="logo1" class="logo">
     <div class="brand">FASTMOST</div>
     <input id="emailInput" placeholder="Email">
     <input id="passwordInput" type="password" placeholder="Пароль">
@@ -205,16 +172,26 @@ button{
   </div>
 </div>
 
-<div id="appBox" class="center" style="display:none">
+<!-- PROFILE -->
+<div id="profileBox" class="center" style="display:none">
   <div class="card">
-    <img id="logoImg" class="logo">
+    <img id="logo2" class="logo">
     <div class="brand">FASTMOST</div>
-
     <img id="avatarImg" class="avatar">
     <input id="avatarUrl" placeholder="Ссылка на аватар">
-    <button onclick="saveAvatar()">Сохранить аватар</button>
+    <button onclick="saveAvatar()">Сохранить и продолжить</button>
+    <p id="profileEmail"></p>
+  </div>
+</div>
 
-    <p id="userEmail"></p>
+<!-- MAIN -->
+<div id="mainBox" class="center" style="display:none">
+  <div class="card">
+    <img id="logo3" class="logo">
+    <div class="brand">FASTMOST</div>
+    <img id="mainAvatar" class="avatar">
+    <p id="mainEmail"></p>
+    <button onclick="alert('Комнаты скоро')">➕ Создать комнату</button>
     <button onclick="logout()">Выйти</button>
   </div>
 </div>
