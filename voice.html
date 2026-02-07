@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>FASTMOST Voice</title>
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://meet.jit.si/external_api.js"></script>
+
 <style>
 body{
   margin:0;
@@ -13,25 +14,27 @@ body{
   font-family:Inter,system-ui;
 }
 header{
-  padding:16px;
+  height:56px;
   background:#141827;
   display:flex;
-  justify-content:space-between;
   align-items:center;
-}
-#jitsi{
-  height:calc(100vh - 60px);
+  justify-content:space-between;
+  padding:0 16px;
 }
 button{
   background:#5865f2;
   border:none;
-  padding:10px 14px;
+  padding:8px 14px;
   color:white;
   border-radius:10px;
   cursor:pointer;
 }
+#jitsi{
+  height:calc(100vh - 56px);
+}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -43,10 +46,45 @@ button{
 
 <script>
 const room = new URLSearchParams(location.search).get("room");
-new JitsiMeetExternalAPI("meet.jit.si",{
-  roomName:"FASTMOST_"+room,
-  parentNode:document.getElementById("jitsi"),
-  height:"100%"
+
+const api = new JitsiMeetExternalAPI("meet.jit.si",{
+  roomName: "FASTMOST_" + room,
+  parentNode: document.getElementById("jitsi"),
+  width: "100%",
+  height: "100%",
+
+  userInfo: {
+    displayName: "FASTMOST User"
+  },
+
+  configOverwrite: {
+    startWithAudioMuted: false,
+    startWithVideoMuted: true,
+    disableModeratorIndicator: true,
+    prejoinPageEnabled: false,
+    enableTalkWhileMuted: false,
+    toolbarButtons: [
+      "microphone",
+      "settings",
+      "hangup"
+    ]
+  },
+
+  interfaceConfigOverwrite: {
+    SHOW_JITSI_WATERMARK: false,
+    SHOW_WATERMARK_FOR_GUESTS: false,
+    DEFAULT_BACKGROUND: "#0b0e14"
+  }
+});
+
+// 🔊 ЯВНО ВКЛЮЧАЕМ МИКРОФОН
+api.addEventListener("videoConferenceJoined", () => {
+  api.executeCommand("toggleAudio");
+});
+
+// 🔍 ЛОГ ДЛЯ ПРОВЕРКИ
+api.addEventListener("audioMuteStatusChanged", e => {
+  console.log("Mic muted:", e.muted);
 });
 </script>
 
