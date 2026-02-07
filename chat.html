@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>FASTMOST Chat</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
+  projectId:"fastmost-f8084"
+});
+const db = getFirestore(app);
+
+const room = new URLSearchParams(location.search).get("room");
+
+onSnapshot(
+  query(collection(db,"rooms",room,"messages"),orderBy("time")),
+  snap=>{
+    chat.innerHTML="";
+    snap.forEach(d=>{
+      const m=d.data();
+      chat.innerHTML+=`<div><b>${m.user}</b>: ${m.text}</div>`;
+    });
+    chat.scrollTop=99999;
+  }
+);
+
+window.send=async()=>{
+  if(!msg.value)return;
+  await addDoc(collection(db,"rooms",room,"messages"),{
+    user:"User",
+    text:msg.value,
+    time:serverTimestamp()
+  });
+  msg.value="";
+};
+</script>
+
+<style>
+body{
+  margin:0;
+  background:#0b0e14;
+  color:white;
+  font-family:Inter;
+}
+header{
+  padding:16px;
+  background:#141827;
+}
+#chat{
+  height:calc(100vh - 120px);
+  overflow:auto;
+  padding:10px;
+}
+footer{
+  display:flex;
+  padding:10px;
+  background:#141827;
+}
+input{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+}
+button{
+  margin-left:10px;
+  background:#5865f2;
+  border:none;
+  color:white;
+  padding:12px;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+<header>
+  💬 FASTMOST Chat
+  <button onclick="location.href='index.html'">←</button>
+</header>
+
+<div id="chat"></div>
+
+<footer>
+  <input id="msg" placeholder="Сообщение">
+  <button onclick="send()">➤</button>
+</footer>
+</body>
+</html>

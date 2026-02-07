@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>FASTMOST Voice</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<script src="https://meet.jit.si/external_api.js"></script>
+<style>
+body{
+  margin:0;
+  background:#0b0e14;
+  color:white;
+  font-family:Inter,system-ui;
+}
+header{
+  padding:16px;
+  background:#141827;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+#jitsi{
+  height:calc(100vh - 60px);
+}
+button{
+  background:#5865f2;
+  border:none;
+  padding:10px 14px;
+  color:white;
+  border-radius:10px;
+  cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <b>🔊 FASTMOST Voice</b>
+  <button onclick="location.href='index.html'">← Назад</button>
+</header>
+
+<div id="jitsi"></div>
+
+<script>
+const room = new URLSearchParams(location.search).get("room");
+new JitsiMeetExternalAPI("meet.jit.si",{
+  roomName:"FASTMOST_"+room,
+  parentNode:document.getElementById("jitsi"),
+  height:"100%"
+});
+</script>
+
+</body>
+</html>
