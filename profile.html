@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>FASTMOST — Профиль</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body{
   margin:0;
@@ -61,7 +60,6 @@ button{
 }
 </style>
 </head>
-
 <body>
 
 <div class="card">
@@ -93,34 +91,32 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const rtdb = getDatabase(app);
 
-let uid = null;
+let uid=null;
 
-onAuthStateChanged(auth, async user => {
+onAuthStateChanged(auth, async user=>{
   if(!user) return location.href="index.html";
-  uid = user.uid;
-  email.innerText = user.email;
+  uid=user.uid;
+  email.innerText=user.email;
 
-  const snap = await getDoc(doc(db,"users",uid));
+  const snap=await getDoc(doc(db,"users",uid));
   if(snap.exists() && snap.data().avatar){
-    ava.innerHTML = `<img src="${snap.data().avatar}" style="width:100%;height:100%;border-radius:50%">`;
+    ava.innerHTML=`<img src="${snap.data().avatar}" style="width:100%;height:100%;border-radius:50%">`;
   }
 
-  onValue(ref(rtdb,`status/${uid}`), s => {
+  onValue(ref(rtdb,"status/"+uid), s=>{
     if(s.exists()){
       status.innerText = s.val().online ? "Статус: Онлайн 🟢" : "Статус: Оффлайн ⚫";
     }
   });
 });
 
-window.saveAvatar = async ()=>{
+window.saveAvatar=async()=>{
   if(!avatarUrl.value) return;
-  await setDoc(doc(db,"users",uid),{
-    avatar: avatarUrl.value
-  },{merge:true});
-  ava.innerHTML = `<img src="${avatarUrl.value}" style="width:100%;height:100%;border-radius:50%">`;
+  await setDoc(doc(db,"users",uid),{avatar:avatarUrl.value},{merge:true});
+  ava.innerHTML=`<img src="${avatarUrl.value}" style="width:100%;height:100%;border-radius:50%">`;
 };
 
-window.logout = async ()=>{
+window.logout=async()=>{
   await signOut(auth);
   location.href="index.html";
 };
