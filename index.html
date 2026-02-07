@@ -5,9 +5,11 @@
 <title>FASTMOST</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Firebase (ES modules) -->
+<!-- CryptoJS для Gravatar -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
 <script type="module">
-/* ===== IMPORTS ===== */
+/* ===== Firebase imports ===== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getAuth,
@@ -15,18 +17,17 @@ import {
   signInWithEmailAndPassword,
   sendEmailVerification,
   onAuthStateChanged,
-  signOut,
-  updateProfile
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* ===== FIREBASE CONFIG (ТВОИ КЛЮЧИ) ===== */
+/* ===== Firebase config (ТВОИ КЛЮЧИ) ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
   authDomain: "fastmost-f8084.firebaseapp.com",
@@ -37,44 +38,37 @@ const firebaseConfig = {
   measurementId: "G-QJFEKWN6HS"
 };
 
-/* ===== INIT ===== */
+/* ===== Init ===== */
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const storage = getStorage(app);
+const db = getFirestore(app);
 
-/* ===== ELEMENTS ===== */
-const authBox = document.getElementById("auth");
-const appBox = document.getElementById("app");
-const emailInput = document.getElementById("email");
-const passInput = document.getElementById("password");
-const userEmail = document.getElementById("userEmail");
-const avatarImg = document.getElementById("avatar");
+/* ===== Utils ===== */
+function gravatar(email){
+  return "https://www.gravatar.com/avatar/" +
+    CryptoJS.MD5(email.trim().toLowerCase()).toString() +
+    "?d=identicon&s=120";
+}
 
-/* ===== AUTH LOGIC ===== */
+/* ===== Auth actions ===== */
 window.register = async () => {
   const email = emailInput.value.trim();
-  const pass = passInput.value.trim();
+  const pass = passwordInput.value.trim();
+  if(!email || !pass) return alert("Введите email и пароль");
 
-  if (!email || !pass) {
-    alert("Введите email и пароль");
-    return;
-  }
+  const cred = await createUserWithEmailAndPassword(auth, email, pass);
+  await sendEmailVerification(cred.user);
 
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    await sendEmailVerification(cred.user);
-    alert("Письмо подтверждения отправлено на почту");
-  } catch (e) {
-    alert(e.message);
-  }
+  await setDoc(doc(db,"users",cred.user.uid),{
+    email,
+    avatar: gravatar(email)
+  });
+
+  alert("Письмо подтверждения отправлено на почту");
 };
 
 window.login = async () => {
-  try {
-    await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
-  } catch (e) {
-    alert(e.message);
-  }
+  await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
 };
 
 window.logout = async () => {
@@ -82,51 +76,50 @@ window.logout = async () => {
   location.reload();
 };
 
-onAuthStateChanged(auth, user => {
-  if (!user) {
-    authBox.style.display = "flex";
-    appBox.style.display = "none";
+/* ===== Save avatar ===== */
+window.saveAvatar = async () => {
+  const user = auth.currentUser;
+  const url = avatarUrl.value.trim();
+  const avatar = url ? url : gravatar(user.email);
+
+  await setDoc(doc(db,"users",user.uid),{
+    avatar
+  },{merge:true});
+
+  avatarImg.src = avatar;
+};
+
+/* ===== Auth state ===== */
+onAuthStateChanged(auth, async user => {
+  if(!user){
+    authBox.style.display="flex";
+    appBox.style.display="none";
     return;
   }
 
-  if (!user.emailVerified) {
-    alert("Подтвердите email, затем обновите страницу");
+  if(!user.emailVerified){
+    alert("Подтвердите email и обновите страницу");
     return;
   }
 
-  authBox.style.display = "none";
-  appBox.style.display = "block";
+  authBox.style.display="none";
+  appBox.style.display="flex";
   userEmail.innerText = user.email;
 
-  if (user.photoURL) {
-    avatarImg.src = user.photoURL;
-  }
+  const snap = await getDoc(doc(db,"users",user.uid));
+  avatarImg.src = snap.exists() ? snap.data().avatar : gravatar(user.email);
 });
-
-/* ===== AVATAR UPLOAD ===== */
-window.uploadAvatar = async file => {
-  if (!file) return;
-
-  const user = auth.currentUser;
-  const avatarRef = ref(storage, "avatars/" + user.uid);
-
-  await uploadBytes(avatarRef, file);
-  const url = await getDownloadURL(avatarRef);
-
-  await updateProfile(user, { photoURL: url });
-  avatarImg.src = url;
-};
 </script>
 
 <style>
 body{
   margin:0;
   background:#0b0e14;
-  color:#fff;
+  color:white;
   font-family:Inter,Segoe UI,Arial;
 }
 
-#auth, #app{
+.center{
   min-height:100vh;
   display:flex;
   align-items:center;
@@ -138,21 +131,22 @@ body{
   padding:32px;
   border-radius:18px;
   width:100%;
-  max-width:360px;
-  box-shadow:0 30px 80px rgba(0,0,0,.6);
+  max-width:380px;
   text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);
 }
 
 .brand{
   font-size:32px;
   font-weight:900;
   color:#6b7cff;
+  margin-bottom:10px;
 }
 
 input{
   width:100%;
   padding:14px;
-  margin-top:14px;
+  margin-top:12px;
   border-radius:12px;
   border:1px solid #242a45;
   background:#0f1324;
@@ -162,7 +156,7 @@ input{
 button{
   width:100%;
   padding:14px;
-  margin-top:16px;
+  margin-top:14px;
   border:none;
   border-radius:12px;
   background:linear-gradient(135deg,#6b7cff,#8b98ff);
@@ -170,15 +164,11 @@ button{
   cursor:pointer;
 }
 
-.profile{
-  text-align:center;
-}
-
-.profile img{
+.avatar{
   width:96px;
   height:96px;
   border-radius:50%;
-  object-fit:cover;
+  margin:10px auto;
   border:2px solid #6b7cff;
 }
 </style>
@@ -187,22 +177,25 @@ button{
 <body>
 
 <!-- AUTH -->
-<div id="auth">
+<div id="authBox" class="center">
   <div class="card">
     <div class="brand">FASTMOST</div>
-    <input id="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Пароль">
+    <input id="emailInput" placeholder="Email">
+    <input id="passwordInput" type="password" placeholder="Пароль">
     <button onclick="register()">Регистрация</button>
     <button onclick="login()">Войти</button>
   </div>
 </div>
 
 <!-- APP -->
-<div id="app" style="display:none">
-  <div class="card profile">
+<div id="appBox" class="center" style="display:none">
+  <div class="card">
     <div class="brand">FASTMOST</div>
-    <img id="avatar" src="">
-    <input type="file" accept="image/*" onchange="uploadAvatar(this.files[0])">
+
+    <img id="avatarImg" class="avatar">
+    <input id="avatarUrl" placeholder="Ссылка на аватар (необязательно)">
+    <button onclick="saveAvatar()">Сохранить аватар</button>
+
     <p id="userEmail"></p>
     <button onclick="logout()">Выйти</button>
   </div>
