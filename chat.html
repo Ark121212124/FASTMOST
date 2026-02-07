@@ -1,134 +1,157 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
 <title>Chat</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
 :root{
-  --bg:#0b1020;
-  --panel:#11173a;
-  --accent:#5865f2;
+  --bg:#070b1a;
+  --panel:#111737;
+  --accent:#6c7cff;
 }
-
-*{box-sizing:border-box}
-html,body{
+*{box-sizing:border-box;font-family:Inter,system-ui}
+body{
   margin:0;
-  height:100%;
-  background:radial-gradient(1200px 600px at top,#141a40,#070b18);
-  font-family:Inter,Arial;
-  color:white;
-}
-
-.chat{
+  background:radial-gradient(1000px 600px at top,#182061,#050710);
+  color:#fff;
   display:flex;
   flex-direction:column;
   height:100vh;
 }
-
-/* header */
-.chat-header{
-  height:56px;
-  display:flex;
-  align-items:center;
-  padding:0 16px;
-  background:rgba(20,25,55,.8);
-}
-
-/* messages */
-.messages{
-  flex:1;
+header{
   padding:14px;
+  background:rgba(0,0,0,.4);
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+header button{
+  background:var(--accent);
+  border:none;
+  border-radius:10px;
+  padding:8px 12px;
+  color:#fff;
+}
+#messages{
+  flex:1;
+  padding:20px;
   overflow-y:auto;
   display:flex;
   flex-direction:column;
-  gap:8px;
+  gap:12px;
 }
-
 .msg{
-  max-width:70%;
+  background:var(--panel);
   padding:10px 14px;
   border-radius:14px;
-  background:rgba(255,255,255,.08);
-  animation:fade .2s ease;
+  max-width:70%;
 }
-
-.msg.me{
-  align-self:flex-end;
-  background:linear-gradient(135deg,#5865f2,#7b83ff);
-}
-
-@keyframes fade{
-  from{opacity:0;transform:translateY(6px)}
-  to{opacity:1}
-}
-
-/* input */
-.chat-input{
+.me{align-self:flex-end;background:#1c265c}
+.footer{
+  padding:10px;
+  background:rgba(0,0,0,.6);
   display:flex;
   gap:8px;
-  padding:10px;
-  background:rgba(10,14,35,.9);
 }
-
-.chat-input input{
+.footer input{
   flex:1;
-  height:42px;
+  padding:12px;
+  border-radius:12px;
+  border:none;
+  background:#0e1430;
+  color:#fff;
+}
+.footer button{
   border:none;
   border-radius:12px;
   padding:0 14px;
-  background:rgba(255,255,255,.08);
-  color:white;
-}
-
-.chat-input button{
-  width:42px;
-  border:none;
-  border-radius:12px;
   background:var(--accent);
-  color:white;
+  color:#fff;
+}
+.gif-panel{
+  display:none;
+  padding:10px;
+  background:#0b1025;
+  gap:10px;
+  overflow-x:auto;
+}
+.gif-panel img{
+  height:80px;
+  border-radius:10px;
   cursor:pointer;
 }
 </style>
 </head>
-
 <body>
-<div class="chat">
 
-  <div class="chat-header">
-    <button onclick="history.back()">← Назад</button>
-    <div style="margin-left:12px;font-weight:600">FASTMOST · Чат</div>
-  </div>
+<header>
+  <button onclick="history.back()">← Назад</button>
+  FASTMOST · Chat
+</header>
 
-  <div id="messages" class="messages"></div>
+<div id="messages"></div>
 
-  <div class="chat-input">
-    <button title="Emoji">😊</button>
-    <input id="text" placeholder="Сообщение..." />
-    <button onclick="send()">➤</button>
-  </div>
+<div class="gif-panel" id="gifs"></div>
 
+<div class="footer">
+  <button onclick="toggleEmoji()">😊</button>
+  <button onclick="toggleGif()">GIF</button>
+  <input id="text" placeholder="Сообщение...">
+  <button onclick="send()">➤</button>
 </div>
 
 <script>
+const room = new URLSearchParams(location.search).get('room');
+const key = 'chat_'+room;
+const msgs = JSON.parse(localStorage.getItem(key)||'[]');
+
+function save(){localStorage.setItem(key,JSON.stringify(msgs));}
+
+function render(){
+  messages.innerHTML='';
+  msgs.forEach(m=>{
+    const d=document.createElement('div');
+    d.className='msg me';
+    d.innerHTML=m;
+    messages.appendChild(d);
+  });
+  messages.scrollTop=99999;
+}
+render();
+
 function send(){
-  const input=document.getElementById('text');
-  const text=input.value.trim();
-  if(!text)return;
-
-  const msg=document.createElement('div');
-  msg.className='msg me';
-  msg.textContent=text;
-
-  document.getElementById('messages').appendChild(msg);
-  input.value='';
-  document.getElementById('messages').scrollTop=999999;
+  if(!text.value.trim()) return;
+  msgs.push(text.value);
+  text.value='';
+  save();render();
 }
 
-document.getElementById('text')
-  .addEventListener('keydown',e=>{if(e.key==='Enter')send()});
-</script>
+function toggleEmoji(){
+  text.value+='😊';
+  text.focus();
+}
 
+const gifList=[
+ 'https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif',
+ 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
+ 'https://media.giphy.com/media/26BRuo6sLetdllPAQ/giphy.gif'
+];
+
+function toggleGif(){
+  gifs.innerHTML='';
+  gifList.forEach(url=>{
+    const img=document.createElement('img');
+    img.src=url;
+    img.onclick=()=>{
+      msgs.push(`<img src="${url}" style="max-width:200px;border-radius:12px">`);
+      save();render();
+      gifs.style.display='none';
+    };
+    gifs.appendChild(img);
+  });
+  gifs.style.display=gifs.style.display==='flex'?'none':'flex';
+}
+</script>
 </body>
 </html>
