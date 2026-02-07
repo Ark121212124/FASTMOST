@@ -13,155 +13,135 @@
   --panel:#141827cc;
   --panel-solid:#141827;
   --accent:#5865f2;
+  --accent2:#3ba55d;
   --text:#e6e8f0;
   --muted:#8b90b3;
-  --radius:14px;
+  --radius:16px;
 }
 
-/* ===== RESET ===== */
 *{box-sizing:border-box}
 html,body{
   margin:0;
   height:100%;
-  background:radial-gradient(circle at top,#1c2038,#0b0e14);
+  background:radial-gradient(circle at top,#1b1f3b,#0b0e14);
+  font-family:Inter,system-ui;
   color:var(--text);
-  font-family:Inter,system-ui,Segoe UI;
 }
 
-/* ===== APP GRID ===== */
+/* ===== LAYOUT ===== */
 #app{
-  display:grid;
-  grid-template-columns:72px 260px 1fr 260px;
+  display:flex;
   height:100vh;
-  gap:12px;
-  padding:12px;
 }
 
-/* ===== GLASS PANELS ===== */
-.panel{
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:280px;
   background:var(--panel);
   backdrop-filter:blur(18px);
-  border-radius:var(--radius);
-  box-shadow:0 20px 60px rgba(0,0,0,.45);
+  padding:18px;
   display:flex;
   flex-direction:column;
+  gap:14px;
 }
 
-/* ===== SERVER BAR ===== */
-.servers{
-  align-items:center;
-  padding:12px 0;
-  gap:12px;
-}
-.server{
-  width:48px;height:48px;
-  border-radius:16px;
-  background:#1f2340;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+.logo{
+  font-size:22px;
   font-weight:900;
+  letter-spacing:1px;
+}
+
+/* ===== MAIN ===== */
+.main{
+  flex:1;
+  padding:30px;
+  overflow:auto;
+}
+
+/* ===== HERO ===== */
+.hero{
+  background:linear-gradient(135deg,#5865f2,#3b45a5);
+  border-radius:24px;
+  padding:40px;
+  margin-bottom:30px;
+}
+.hero h1{
+  margin:0;
+  font-size:34px;
+}
+.hero p{
+  opacity:.85;
+  margin:10px 0 0;
+}
+
+/* ===== ROOM GRID ===== */
+.section-title{
+  font-size:18px;
+  margin-bottom:12px;
+}
+
+.rooms{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:16px;
+}
+
+.room{
+  background:var(--panel);
+  backdrop-filter:blur(16px);
+  padding:18px;
+  border-radius:18px;
   cursor:pointer;
   transition:.25s;
 }
-.server:hover{
+.room:hover{
+  transform:translateY(-4px);
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
+}
+
+.room .type{
+  font-size:13px;
+  color:var(--muted);
+}
+.room .name{
+  font-size:18px;
+  margin-top:6px;
+}
+
+/* ===== BUTTON ===== */
+button{
+  padding:14px;
+  border:none;
   border-radius:14px;
   background:var(--accent);
-}
-
-/* ===== ROOMS ===== */
-.rooms-header{
-  padding:16px;
-  font-weight:700;
-}
-.room{
-  padding:10px 14px;
-  margin:4px 8px;
-  border-radius:10px;
-  cursor:pointer;
-  color:var(--muted);
-  transition:.2s;
-}
-.room:hover,
-.room.active{
-  background:#1f2340;
   color:white;
+  font-weight:600;
+  cursor:pointer;
 }
 
-/* ===== CHAT ===== */
-.chat-header{
-  padding:16px;
-  border-bottom:1px solid #1f2340;
-  font-weight:700;
+/* ===== MODAL ===== */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
 }
-.messages{
-  flex:1;
-  padding:16px;
-  overflow:auto;
+.modal-content{
+  background:var(--panel-solid);
+  padding:30px;
+  border-radius:20px;
+  width:420px;
 }
-.msg{
-  margin-bottom:14px;
-}
-.msg-user{
-  font-weight:600;
-  font-size:14px;
-}
-.msg-text{
-  color:var(--text);
-  opacity:.9;
-}
-.chat-input{
-  padding:12px;
-  display:flex;
-  gap:10px;
-}
-.chat-input input{
-  flex:1;
-  padding:12px 14px;
+.modal input{
+  width:100%;
+  padding:14px;
+  margin-bottom:12px;
   border-radius:12px;
   border:none;
   background:#0f1324;
   color:white;
-}
-.chat-input button{
-  padding:12px 18px;
-  border:none;
-  border-radius:12px;
-  background:var(--accent);
-  color:white;
-  cursor:pointer;
-}
-
-/* ===== VOICE ===== */
-.voice{
-  height:220px;
-  border-top:1px solid #1f2340;
-}
-
-/* ===== USERS ===== */
-.users-header{
-  padding:16px;
-  font-weight:700;
-}
-.user{
-  padding:8px 12px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color:var(--muted);
-}
-.status{
-  width:8px;height:8px;
-  border-radius:50%;
-}
-.online{background:#3ba55d}
-.offline{background:#666}
-
-/* ===== SCROLL ===== */
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-thumb{
-  background:#2a2f55;
-  border-radius:10px;
 }
 </style>
 </head>
@@ -170,144 +150,90 @@ html,body{
 
 <div id="app">
 
-  <!-- SERVERS -->
-  <div class="panel servers">
-    <div class="server">FM</div>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">FASTMOST</div>
+    <button onclick="openModal()">➕ Создать комнату</button>
   </div>
 
-  <!-- ROOMS -->
-  <div class="panel">
-    <div class="rooms-header">Комнаты</div>
-    <input id="roomName" placeholder="Новая комната"
-      style="margin:0 12px 8px;padding:10px;border-radius:10px;border:none;background:#0f1324;color:white">
-    <button onclick="createRoom()"
-      style="margin:0 12px 12px;padding:10px;border:none;border-radius:10px;background:#5865f2;color:white">
-      Создать
-    </button>
-    <div id="roomList"></div>
-  </div>
+  <!-- MAIN -->
+  <div class="main">
 
-  <!-- CHAT -->
-  <div class="panel">
-    <div class="chat-header" id="roomTitle">Выберите комнату</div>
-    <div class="messages" id="messages"></div>
-    <div class="chat-input">
-      <input id="message" placeholder="Сообщение">
-      <button onclick="sendMessage()">➤</button>
+    <div class="hero">
+      <h1>Добро пожаловать в FASTMOST</h1>
+      <p>Создавай голосовые и текстовые комнаты. Общайся мгновенно.</p>
     </div>
-    <div class="voice" id="voice"></div>
-  </div>
 
-  <!-- USERS -->
-  <div class="panel">
-    <div class="users-header">Участники</div>
-    <div id="users"></div>
+    <div class="section-title">🔊 Voice комнаты</div>
+    <div class="rooms" id="voiceRooms"></div>
+
+    <br>
+
+    <div class="section-title">💬 Текстовые комнаты</div>
+    <div class="rooms" id="textRooms"></div>
+
   </div>
 
 </div>
 
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Создать комнату</h3>
+    <input id="roomName" placeholder="Название">
+    <select id="roomType" style="width:100%;padding:14px;border-radius:12px;border:none">
+      <option value="voice">Голосовая</option>
+      <option value="text">Текстовая</option>
+    </select>
+    <br><br>
+    <button onclick="createRoom()">Создать</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
   authDomain:"fastmost-f8084.firebaseapp.com",
   projectId:"fastmost-f8084"
 });
-const auth=getAuth(app);
-const db=getFirestore(app);
+const db = getFirestore(app);
 
-let currentRoom=null;
-let username="User"+Math.floor(Math.random()*9000);
+window.openModal=()=>modal.style.display="flex";
+modal.onclick=e=>{if(e.target===modal)modal.style.display="none"};
 
-onAuthStateChanged(auth,u=>{
-  if(!u){
-    signInAnonymously(auth);
-    return;
-  }
-  setDoc(doc(db,"users",u.uid),{
-    name:username,
-    online:true
-  });
-});
-
-/* ROOMS */
 window.createRoom=async()=>{
   if(!roomName.value)return;
-  await addDoc(collection(db,"rooms"),{name:roomName.value});
+  await addDoc(collection(db,"rooms"),{
+    name:roomName.value,
+    type:roomType.value
+  });
+  modal.style.display="none";
   roomName.value="";
 };
+
 onSnapshot(collection(db,"rooms"),snap=>{
-  roomList.innerHTML="";
+  voiceRooms.innerHTML="";
+  textRooms.innerHTML="";
   snap.forEach(d=>{
-    const r=document.createElement("div");
-    r.className="room";
-    r.textContent="# "+d.data().name;
-    r.onclick=()=>enterRoom(d.id,d.data().name,r);
-    roomList.appendChild(r);
+    const r=d.data();
+    const el=document.createElement("div");
+    el.className="room";
+    el.innerHTML=`
+      <div class="type">${r.type==="voice"?"🔊 Voice":"💬 Text"}</div>
+      <div class="name">${r.name}</div>`;
+    el.onclick=()=>{
+      if(r.type==="voice"){
+        location.href=`voice.html?room=${d.id}`;
+      }else{
+        location.href=`chat.html?room=${d.id}`;
+      }
+    };
+    (r.type==="voice"?voiceRooms:textRooms).appendChild(el);
   });
 });
-
-/* ENTER */
-function enterRoom(id,name,el){
-  document.querySelectorAll(".room").forEach(r=>r.classList.remove("active"));
-  el.classList.add("active");
-  currentRoom=id;
-  roomTitle.textContent="# "+name;
-  messages.innerHTML="";
-  startChat();
-  startVoice();
-}
-
-/* CHAT */
-function startChat(){
-  onSnapshot(query(collection(db,"rooms",currentRoom,"messages"),orderBy("time")),snap=>{
-    messages.innerHTML="";
-    snap.forEach(d=>{
-      const m=d.data();
-      messages.innerHTML+=`
-        <div class="msg">
-          <div class="msg-user">${m.user}</div>
-          <div class="msg-text">${m.text}</div>
-        </div>`;
-    });
-    messages.scrollTop=messages.scrollHeight;
-  });
-}
-window.sendMessage=async()=>{
-  if(!message.value)return;
-  await addDoc(collection(db,"rooms",currentRoom,"messages"),{
-    user:username,
-    text:message.value,
-    time:serverTimestamp()
-  });
-  message.value="";
-};
-
-/* USERS */
-onSnapshot(collection(db,"users"),snap=>{
-  users.innerHTML="";
-  snap.forEach(d=>{
-    const u=d.data();
-    users.innerHTML+=`
-      <div class="user">
-        <div class="status ${u.online?"online":"offline"}"></div>
-        ${u.name}
-      </div>`;
-  });
-});
-
-/* VOICE */
-function startVoice(){
-  voice.innerHTML="";
-  new JitsiMeetExternalAPI("meet.jit.si",{
-    roomName:"FASTMOST_"+currentRoom,
-    parentNode:voice,
-    height:220
-  });
-}
 </script>
 
 </body>
