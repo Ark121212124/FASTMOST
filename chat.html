@@ -5,175 +5,245 @@
 <title>FASTMOST • Чат</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
 
 <style>
-:root{
-  --bg:#0b0e14;
-  --panel:#141827cc;
-  --panel-solid:#141827;
-  --accent:#5865f2;
-  --text:#e6e8f0;
-  --muted:#8b90b3;
-}
-*{box-sizing:border-box}
-html,body{
+body{
   margin:0;
-  height:100%;
+  height:100vh;
   font-family:Inter,system-ui;
   background:radial-gradient(circle at top,#1b1f3b,#0b0e14);
-  color:var(--text);
-}
-
-.app{
-  display:flex;
-  height:100vh;
-}
-
-/* SIDEBAR */
-.sidebar{
-  width:260px;
-  background:var(--panel);
-  backdrop-filter:blur(18px);
-  padding:20px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-.logo{
-  font-size:22px;
-  font-weight:800;
-}
-.btn{
-  background:var(--accent);
-  border:none;
-  padding:12px;
-  border-radius:14px;
-  color:white;
-  cursor:pointer;
-}
-.btn.secondary{background:#2a2f55}
-
-/* CHAT */
-.main{
-  flex:1;
+  color:#e6e8f0;
   display:flex;
   flex-direction:column;
 }
 .header{
-  padding:18px;
-  background:var(--panel-solid);
-  font-weight:600;
+  padding:14px 20px;
+  display:flex;
+  gap:12px;
+  background:rgba(20,24,39,.9);
+  backdrop-filter:blur(16px);
 }
-.messages{
+.header button{
+  background:#5865f2;
+  border:none;
+  padding:8px 14px;
+  border-radius:12px;
+  color:white;
+  cursor:pointer;
+}
+.chat{
   flex:1;
-  padding:24px;
-  overflow:auto;
+  padding:20px;
+  overflow-y:auto;
 }
-.msg{
-  margin-bottom:16px;
-  animation:fadeUp .25s ease;
+.message{
+  display:flex;
+  gap:12px;
+  margin-bottom:14px;
 }
-.msg span{
-  color:var(--muted);
+.avatar{
+  width:42px;height:42px;border-radius:50%;
+}
+.bubble{
+  background:#1b2042;
+  padding:12px 14px;
+  border-radius:16px;
+  max-width:520px;
+  position:relative;
+}
+.name{
+  font-weight:600;
+  font-size:14px;
+}
+.text img{max-width:260px;border-radius:12px;margin-top:6px}
+.edit{
   font-size:12px;
-}
-.msg p{
-  margin:4px 0 0;
+  opacity:.5;
+  cursor:pointer;
+  margin-left:6px;
 }
 .input{
   display:flex;
-  gap:12px;
-  padding:18px;
-  background:var(--panel-solid);
+  gap:10px;
+  padding:14px;
+  background:rgba(20,24,39,.9);
 }
 .input input{
   flex:1;
-  padding:14px;
-  border:none;
+  padding:12px;
   border-radius:14px;
-  background:#0f1324;
+  border:none;
+  background:#0f1328;
   color:white;
 }
 .input button{
-  width:56px;
+  background:#5865f2;
+  border:none;
+  padding:12px 16px;
+  border-radius:14px;
+  color:white;
+  cursor:pointer;
 }
-
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(6px)}
-  to{opacity:1;transform:none}
+emoji-picker{
+  position:absolute;
+  bottom:80px;
+  left:20px;
+  display:none;
+}
+.gif-panel{
+  display:none;
+  padding:10px;
+  background:#0f1328;
+  max-height:240px;
+  overflow:auto;
+}
+.gif-panel img{
+  width:120px;
+  border-radius:10px;
+  margin:4px;
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<div class="app">
-
-  <div class="sidebar">
-    <div class="logo">FASTMOST</div>
-    <button class="btn secondary" onclick="location.href='index.html'">← Назад</button>
-    <button class="btn" onclick="location.href='voice.html?room='+roomId">🎙 Voice</button>
-  </div>
-
-  <div class="main">
-    <div class="header" id="roomTitle">Чат</div>
-    <div class="messages" id="messages"></div>
-    <div class="input">
-      <input id="text" placeholder="Сообщение...">
-      <button class="btn" onclick="send()">➤</button>
-    </div>
-  </div>
-
+<div class="header">
+  <button onclick="history.back()">←</button>
+  <div>💬 FASTMOST</div>
 </div>
+
+<div class="chat" id="chat"></div>
+
+<div class="gif-panel" id="gifs"></div>
+
+<div class="input">
+  <button onclick="toggleEmoji()">😀</button>
+  <button onclick="searchGif()">🎞</button>
+  <input id="msg" placeholder="Сообщение...">
+  <button onclick="send()">➤</button>
+</div>
+
+<emoji-picker id="emoji"></emoji-picker>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore,collection,addDoc,onSnapshot,query,orderBy,serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getFirestore,collection,addDoc,onSnapshot,
+  serverTimestamp,doc,getDoc,query,orderBy,updateDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const roomId=new URLSearchParams(location.search).get("room");
-
-const app=initializeApp({
+const app = initializeApp({
   apiKey:"AIzaSyACZRa6uGHLGIYhLvN6-IeKZ_Ees28zYCM",
   authDomain:"fastmost-f8084.firebaseapp.com",
   projectId:"fastmost-f8084"
 });
+
 const auth=getAuth();
 const db=getFirestore();
+const roomId=new URLSearchParams(location.search).get("room");
 
-let userEmail="";
+const chat=document.getElementById("chat");
+const msg=document.getElementById("msg");
+const picker=document.getElementById("emoji");
+const gifs=document.getElementById("gifs");
 
-onAuthStateChanged(auth,user=>{
-  if(!user) location.href="index.html";
-  userEmail=user.email;
+let me=null, lastVisible=true;
+
+/* AUTH */
+onAuthStateChanged(auth,async u=>{
+  if(!u){location.href="login.html";return;}
+  const s=await getDoc(doc(db,"users",u.uid));
+  me={...s.data(),uid:u.uid};
+  load();
 });
 
-onSnapshot(
-  query(collection(db,"rooms",roomId,"messages"),orderBy("time")),
-  snap=>{
-    messages.innerHTML="";
+/* MESSAGES */
+function load(){
+  const q=query(collection(db,"rooms",roomId,"messages"),orderBy("createdAt"));
+  onSnapshot(q,snap=>{
+    chat.innerHTML="";
     snap.forEach(d=>{
       const m=d.data();
-      messages.innerHTML+=`
-        <div class="msg">
-          <span>${m.user}</span>
-          <p>${m.text}</p>
+      const div=document.createElement("div");
+      div.className="message";
+      div.innerHTML=`
+        <img class="avatar" src="${m.avatar}">
+        <div class="bubble">
+          <div class="name">${m.name}
+          ${m.uid===me.uid?`<span class="edit" onclick="edit('${d.id}')">✏️</span>`:""}
+          </div>
+          <div class="text">${render(m.text)}</div>
         </div>`;
+      chat.appendChild(div);
     });
-    messages.scrollTop=99999;
-  }
-);
-
-window.send=async()=>{
-  if(!text.value) return;
-  await addDoc(collection(db,"rooms",roomId,"messages"),{
-    user:userEmail,
-    text:text.value,
-    time:serverTimestamp()
+    chat.scrollTop=chat.scrollHeight;
+    if(!lastVisible) notify();
   });
-  text.value="";
+}
+
+/* SEND */
+window.send=async()=>{
+  if(!msg.value.trim())return;
+  await addDoc(collection(db,"rooms",roomId,"messages"),{
+    text:msg.value,
+    uid:me.uid,
+    name:me.name,
+    avatar:me.avatar,
+    createdAt:serverTimestamp()
+  });
+  msg.value="";
 };
+
+/* EDIT */
+window.edit=async(id)=>{
+  const text=prompt("Редактировать сообщение");
+  if(text) await updateDoc(doc(db,"rooms",roomId,"messages",id),{text});
+};
+
+/* EMOJI */
+picker.addEventListener("emoji-click",e=>{
+  msg.value+=e.detail.unicode;
+});
+window.toggleEmoji=()=>picker.style.display=picker.style.display?"":"block";
+
+/* GIF SEARCH */
+window.searchGif=async()=>{
+  const q=prompt("Поиск GIF");
+  if(!q)return;
+  gifs.style.display="block";
+  gifs.innerHTML="Загрузка...";
+  const res=await fetch(
+    `https://tenor.googleapis.com/v2/search?q=${q}&key=ТВОЙ_TENOR_API_KEY&limit=12`
+  );
+  const json=await res.json();
+  gifs.innerHTML="";
+  json.results.forEach(g=>{
+    const img=document.createElement("img");
+    img.src=g.media_formats.gif.url;
+    img.onclick=()=>{msg.value=img.src;gifs.style.display="none";}
+    gifs.appendChild(img);
+  });
+};
+
+/* RENDER */
+function render(t){
+  if(t.match(/^https?:\/\/.*\.gif/i))return `<img src="${t}">`;
+  return t;
+}
+
+/* NOTIFY */
+document.addEventListener("visibilitychange",()=>{
+  lastVisible=!document.hidden;
+});
+function notify(){
+  if(Notification.permission==="granted")
+    new Notification("FASTMOST","Новое сообщение");
+}
+Notification.requestPermission();
 </script>
 
 </body>
