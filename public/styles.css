@@ -85,3 +85,25 @@ body {
   padding: 0 14px;
   cursor: pointer;
 }
+.message {
+  background: #1b1b23;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  max-width: 70%;
+}
+
+.user {
+  font-weight: bold;
+  color: #8ea1ff;
+  margin-right: 6px;
+}
+
+.time {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.text {
+  margin-top: 4px;
+}
