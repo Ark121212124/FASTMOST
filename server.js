@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
 const multer = require("multer");
+const crypto = require("crypto");
 
 /* ===== PATHS ===== */
 const PUBLIC = path.join(__dirname, "public");
@@ -15,45 +16,104 @@ if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, "[]");
 if (!fs.existsSync(AVATARS)) fs.mkdirSync(AVATARS);
 if (!fs.existsSync(CHANNELS)) fs.mkdirSync(CHANNELS);
 
+/* ===== HELPERS ===== */
+const loadUsers = () => JSON.parse(fs.readFileSync(USERS_FILE));
+const saveUsers = u => fs.writeFileSync(USERS_FILE, JSON.stringify(u, null, 2));
+const hash = p => crypto.createHash("sha256").update(p).digest("hex");
+const genToken = () => crypto.randomBytes(24).toString("hex");
+
 /* ===== UPLOAD ===== */
 const upload = multer({ dest: AVATARS });
 
 /* ===== HTTP SERVER ===== */
 const server = http.createServer((req, res) => {
 
-  /* ---- avatar upload ---- */
-  if (req.method === "POST" && req.url === "/upload-avatar") {
-    upload.single("avatar")(req, res, () => {
-      res.writeHead(200, { "Content-Type": "application/json" });
+  /* ===== AUTH ===== */
+  if (req.method === "POST" && (req.url === "/login" || req.url === "/register")) {
+    let body = "";
+    req.on("data", c => body += c);
+    req.on("end", () => {
+      const { username, password } = JSON.parse(body || "{}");
+      const users = loadUsers();
+
+      if (!username || !password) {
+        res.writeHead(400);
+        return res.end("Bad request");
+      }
+
+      if (req.url === "/register") {
+        if (users.find(u => u.username === username)) {
+          res.writeHead(409);
+          return res.end("User exists");
+        }
+
+        const user = {
+          username,
+          password: hash(password),
+          token: genToken(),
+          avatar: "/logo.svg"
+        };
+
+        users.push(user);
+        saveUsers(users);
+
+        return res.end(JSON.stringify({
+          token: user.token,
+          username: user.username,
+          avatar: user.avatar
+        }));
+      }
+
+      const user = users.find(
+        u => u.username === username && u.password === hash(password)
+      );
+
+      if (!user) {
+        res.writeHead(401);
+        return res.end("Unauthorized");
+      }
+
+      user.token = genToken();
+      saveUsers(users);
+
       res.end(JSON.stringify({
-        url: "/avatars/" + req.file.filename
+        token: user.token,
+        username: user.username,
+        avatar: user.avatar
       }));
     });
     return;
   }
 
-  /* ---- static files ---- */
+  /* ===== AVATAR UPLOAD ===== */
+  if (req.method === "POST" && req.url === "/upload-avatar") {
+    upload.single("avatar")(req, res, () => {
+      res.end(JSON.stringify({ url: "/avatars/" + req.file.filename }));
+    });
+    return;
+  }
+
+  /* ===== STATIC FILES ===== */
   const safeUrl = req.url === "/" ? "/index.html" : req.url;
   const isAvatar = safeUrl.startsWith("/avatars/");
-  const baseDir = isAvatar ? AVATARS : PUBLIC;
-  const filePath = path.join(baseDir, safeUrl.replace("/avatars/", ""));
+  const base = isAvatar ? AVATARS : PUBLIC;
+  const filePath = path.join(base, safeUrl.replace("/avatars/", ""));
 
-  if (!filePath.startsWith(baseDir)) {
+  if (!filePath.startsWith(base)) {
     res.writeHead(403);
-    return res.end("Forbidden");
+    return res.end();
   }
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404);
-      return res.end("Not found");
+      return res.end();
     }
 
-    const ext = path.extname(filePath);
     const types = {
       ".html": "text/html; charset=utf-8",
-      ".css": "text/css; charset=utf-8",
-      ".js": "application/javascript; charset=utf-8",
+      ".css": "text/css",
+      ".js": "application/javascript",
       ".svg": "image/svg+xml",
       ".png": "image/png",
       ".jpg": "image/jpeg",
@@ -61,7 +121,7 @@ const server = http.createServer((req, res) => {
     };
 
     res.writeHead(200, {
-      "Content-Type": types[ext] || "application/octet-stream"
+      "Content-Type": types[path.extname(filePath)] || "application/octet-stream"
     });
     res.end(data);
   });
@@ -70,28 +130,21 @@ const server = http.createServer((req, res) => {
 /* ===== WEBSOCKET ===== */
 const wss = new WebSocket.Server({ server });
 const clients = new Set();
-const voiceChannels = {}; // { channelName: Set(ws) }
+const voiceChannels = {};
 
-/* ===== HELPERS ===== */
-function broadcast(data) {
+const broadcast = data => {
   const msg = JSON.stringify(data);
-  clients.forEach(c => {
-    if (c.readyState === WebSocket.OPEN) c.send(msg);
-  });
-}
+  clients.forEach(c => c.readyState === 1 && c.send(msg));
+};
 
-function usersInChannel(channel) {
-  return [...clients]
-    .filter(c => c.channel === channel)
-    .map(c => ({
-      username: c.username,
-      avatar: c.avatar
-    }));
-}
+const usersInChannel = ch =>
+  [...clients].filter(c => c.channel === ch).map(c => ({
+    username: c.username,
+    avatar: c.avatar
+  }));
 
-/* ===== WS LOGIC ===== */
 wss.on("connection", ws => {
-  ws.id = ws._socket.remotePort; // простой peer id
+  ws.id = ws._socket.remotePort;
   ws.username = "Guest";
   ws.avatar = "/logo.svg";
   ws.channel = "общий";
@@ -104,13 +157,12 @@ wss.on("connection", ws => {
     let data;
     try { data = JSON.parse(raw); } catch { return; }
 
-    /* ===== TEXT JOIN ===== */
     if (data.type === "join") {
       ws.username = data.user;
       ws.avatar = data.avatar || ws.avatar;
       ws.channel = data.channel;
 
-      const file = path.join(CHANNELS, data.channel + ".json");
+      const file = path.join(CHANNELS, ws.channel + ".json");
       if (!fs.existsSync(file)) fs.writeFileSync(file, "[]");
 
       ws.send(JSON.stringify({
@@ -118,64 +170,32 @@ wss.on("connection", ws => {
         messages: JSON.parse(fs.readFileSync(file))
       }));
 
-      broadcast({
-        type: "users",
-        users: usersInChannel(ws.channel)
-      });
+      broadcast({ type: "users", users: usersInChannel(ws.channel) });
     }
 
-    /* ===== TEXT MESSAGE ===== */
     if (data.type === "message") {
-      const file = path.join(CHANNELS, data.channel + ".json");
-      if (!fs.existsSync(file)) fs.writeFileSync(file, "[]");
-
-      const msgs = JSON.parse(fs.readFileSync(file));
+      const file = path.join(CHANNELS, ws.channel + ".json");
+      const msgs = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
       msgs.push(data);
       fs.writeFileSync(file, JSON.stringify(msgs, null, 2));
-
       broadcast(data);
     }
 
-    /* ===== VOICE JOIN ===== */
     if (data.type === "voice-join") {
-      const ch = data.channel;
-      ws.voice = ch;
-
-      if (!voiceChannels[ch]) voiceChannels[ch] = new Set();
-      voiceChannels[ch].add(ws);
-
-      voiceChannels[ch].forEach(c => {
-        if (c !== ws) {
-          c.send(JSON.stringify({
-            type: "voice-user",
-            userId: ws.id
-          }));
-        }
-      });
+      if (!voiceChannels[data.channel]) voiceChannels[data.channel] = new Set();
+      voiceChannels[data.channel].add(ws);
+      ws.voice = data.channel;
     }
 
-    /* ===== VOICE LEAVE ===== */
-    if (data.type === "voice-leave") {
-      const ch = ws.voice;
-      if (ch && voiceChannels[ch]) {
-        voiceChannels[ch].delete(ws);
-        if (!voiceChannels[ch].size) delete voiceChannels[ch];
-      }
+    if (data.type === "voice-leave" && ws.voice) {
+      voiceChannels[ws.voice]?.delete(ws);
       ws.voice = null;
     }
 
-    /* ===== WEBRTC SIGNALING ===== */
-    if (
-      data.type === "voice-offer" ||
-      data.type === "voice-answer" ||
-      data.type === "voice-ice"
-    ) {
+    if (data.type?.startsWith("voice-")) {
       clients.forEach(c => {
         if (c.id === data.to) {
-          c.send(JSON.stringify({
-            ...data,
-            from: ws.id
-          }));
+          c.send(JSON.stringify({ ...data, from: ws.id }));
         }
       });
     }
@@ -183,21 +203,13 @@ wss.on("connection", ws => {
 
   ws.on("close", () => {
     clients.delete(ws);
-
-    if (ws.voice && voiceChannels[ws.voice]) {
-      voiceChannels[ws.voice].delete(ws);
-    }
-
+    if (ws.voice) voiceChannels[ws.voice]?.delete(ws);
     broadcast({ type: "online", count: clients.size });
-    broadcast({
-      type: "users",
-      users: usersInChannel(ws.channel)
-    });
   });
 });
 
 /* ===== START ===== */
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => {
-  console.log("🚀 FASTMOST running on port", PORT);
-});
+server.listen(PORT, () =>
+  console.log("🚀 FASTMOST running on port", PORT)
+);
