@@ -1,16 +1,19 @@
 * {
   box-sizing: border-box;
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 body {
   margin: 0;
-  background: #0f0f14;
+  background: #0b0d14;
   color: #fff;
 }
 
-/* ===== AUTH / ONBOARD ===== */
-.auth-box, .onboard {
+/* =========================
+   AUTH / ONBOARD
+========================= */
+.auth-box,
+.onboard {
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -35,46 +38,147 @@ body {
   cursor: pointer;
 }
 
-/* ===== APP ===== */
-.app {
+/* =========================
+   MAIN LAYOUT
+========================= */
+.layout {
   display: flex;
   height: 100vh;
+  overflow: hidden;
 }
 
-/* SIDEBAR */
-.sidebar {
-  width: 72px;
-  background: #111;
+/* =========================
+   PROFILE BAR (LEFT)
+========================= */
+.profile-bar {
+  width: 90px;
+  background: #0f1220;
   display: flex;
-  justify-content: center;
-  padding-top: 12px;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
 }
 
-.server {
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.avatar {
   width: 48px;
   height: 48px;
-  background: #5865f2;
   border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-/* CHAT */
-.chat-area {
+.profile-name {
+  text-align: center;
+  font-size: 12px;
+}
+
+.status {
+  font-size: 11px;
+}
+
+.status.online {
+  color: #3ba55d;
+}
+
+.profile-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-actions button {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+/* =========================
+   CHANNELS PANEL
+========================= */
+.channels-panel {
+  width: 240px;
+  background: #111428;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.section {
+  margin-bottom: 22px;
+}
+
+.section-title {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 6px;
+  padding-left: 4px;
+}
+
+.channel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.channel {
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.channel:hover {
+  background: #1b1f3a;
+  opacity: 1;
+}
+
+.channel.active {
+  background: #1f254b;
+  opacity: 1;
+}
+
+.channel.voice {
+  color: #8ea1ff;
+}
+
+.add-btn {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: #8ea1ff;
+  cursor: pointer;
+  text-align: left;
+  padding: 4px 6px;
+}
+
+/* =========================
+   CHAT PANEL
+========================= */
+.chat-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: radial-gradient(circle at top, #141933, #0b0d14);
 }
 
+/* HEADER */
 .chat-header {
-  padding: 14px;
-  background: #15151c;
-  border-bottom: 1px solid #222;
+  padding: 14px 16px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1e223a;
+  background: rgba(15, 18, 32, 0.85);
 }
 
+/* MESSAGES */
 .messages {
   flex: 1;
   padding: 16px;
@@ -82,7 +186,7 @@ body {
 }
 
 .message {
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
 .user {
@@ -98,20 +202,24 @@ body {
 
 .text {
   margin-top: 4px;
+  line-height: 1.4;
 }
 
+/* INPUT */
 .chat-input {
   display: flex;
   gap: 8px;
   padding: 12px;
-  background: #15151c;
+  background: #0f1220;
+  border-top: 1px solid #1e223a;
 }
 
 .chat-input input {
   flex: 1;
-  padding: 10px;
+  padding: 12px;
   border-radius: 8px;
   border: none;
+  outline: none;
 }
 
 .chat-input button {
@@ -119,20 +227,36 @@ body {
   border: none;
   border-radius: 8px;
   color: white;
-  padding: 0 14px;
+  padding: 0 16px;
   cursor: pointer;
 }
-.users {
+
+/* =========================
+   USERS PANEL (RIGHT)
+========================= */
+.users-panel {
   width: 200px;
-  background: #15151c;
-  padding: 10px;
+  background: #0f1220;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.users-title {
+  font-size: 13px;
+  margin-bottom: 10px;
+  opacity: 0.7;
 }
 
 .user-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.user-item:hover {
+  background: #1b1f3a;
 }
 
 .user-item img {
@@ -140,4 +264,3 @@ body {
   height: 28px;
   border-radius: 50%;
 }
-
