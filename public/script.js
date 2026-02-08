@@ -14,9 +14,22 @@ ws.onmessage = e => {
     return;
   }
 
+  if (data.type === "file") {
+    const div = document.createElement("div");
+    div.className = "message";
+    div.innerHTML = `
+      <span class="user">${data.user}</span>
+      <span class="time">${data.time}</span>
+      <div class="text">
+        <a href="${data.url}" target="_blank">${data.name}</a>
+      </div>
+    `;
+    messages.appendChild(div);
+    return;
+  }
+
   const msg = document.createElement("div");
   msg.className = "message";
-
   msg.innerHTML = `
     <span class="user">${data.user}</span>
     <span class="time">${data.time}</span>
