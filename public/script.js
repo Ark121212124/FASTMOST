@@ -8,6 +8,7 @@ ws.onmessage = e => {
   const d = document.createElement("div");
   d.textContent = e.data;
   messages.appendChild(d);
+  messages.scrollTop = messages.scrollHeight;
 };
 
 function send() {
