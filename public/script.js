@@ -1,45 +1,24 @@
-const protocol = location.protocol === "https:" ? "wss" : "ws";
-const ws = new WebSocket(protocol + "://" + location.host);
+const ws = new WebSocket(
+  (location.protocol === "https:" ? "wss://" : "ws://") + location.host
+);
 
-const me = localStorage.getItem("username") || "user";
-
-ws.onopen = () => {
-  ws.send(JSON.stringify({
-    type: "join",
-    user: me
-  }));
-};
+const messages = document.getElementById("messages");
 
 ws.onmessage = e => {
-  const d = JSON.parse(e.data);
-
-  if (d.type === "message") {
-    messages.innerHTML += `<div>${d.user}: ${d.text}</div>`;
-    messages.scrollTop = messages.scrollHeight;
-  }
-
-  if (d.type === "file") {
-    messages.innerHTML += `<a href="${d.url}" target="_blank">${d.name}</a>`;
-  }
+  const d = document.createElement("div");
+  d.textContent = e.data;
+  messages.appendChild(d);
 };
 
 function send() {
-  ws.send(JSON.stringify({
-    type: "message",
-    user: me,
-    text: msg.value
-  }));
+  if (!msg.value) return;
+  ws.send(msg.value);
   msg.value = "";
 }
 
-function sendFile() {
-  const f = file.files[0];
-  const fd = new FormData();
-  fd.append("file", f);
-
-  fetch("/upload", {
-    method: "POST",
-    headers: { "x-user": me },
-    body: fd
-  });
+async function sendFile() {
+  if (!file.files[0]) return;
+  const f = new FormData();
+  f.append("file", file.files[0]);
+  await fetch("/upload", { method: "POST", body: f });
 }
