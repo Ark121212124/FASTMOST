@@ -18,9 +18,10 @@ if (!fs.existsSync(CHANNELS)) fs.mkdirSync(CHANNELS);
 /* ===== UPLOAD ===== */
 const upload = multer({ dest: AVATARS });
 
-/* ===== HTTP ===== */
+/* ===== HTTP SERVER ===== */
 const server = http.createServer((req, res) => {
-  // avatar upload
+
+  /* ---- avatar upload ---- */
   if (req.method === "POST" && req.url === "/upload-avatar") {
     upload.single("avatar")(req, res, () => {
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -31,21 +32,21 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  const safe = req.url === "/" ? "/index.html" : req.url;
-  const filePath = path.join(
-    safe.startsWith("/avatars") ? AVATARS : PUBLIC,
-    safe.replace("/avatars", "")
-  );
+  /* ---- static files ---- */
+  const safeUrl = req.url === "/" ? "/index.html" : req.url;
+  const isAvatar = safeUrl.startsWith("/avatars/");
+  const baseDir = isAvatar ? AVATARS : PUBLIC;
+  const filePath = path.join(baseDir, safeUrl.replace("/avatars/", ""));
 
-  if (!filePath.startsWith(PUBLIC) && !filePath.startsWith(AVATARS)) {
+  if (!filePath.startsWith(baseDir)) {
     res.writeHead(403);
-    return res.end();
+    return res.end("Forbidden");
   }
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404);
-      return res.end();
+      return res.end("Not found");
     }
 
     const ext = path.extname(filePath);
@@ -69,12 +70,14 @@ const server = http.createServer((req, res) => {
 /* ===== WEBSOCKET ===== */
 const wss = new WebSocket.Server({ server });
 const clients = new Set();
-const voiceChannels = {}; // { name: Set(ws) }
+const voiceChannels = {}; // { channelName: Set(ws) }
 
 /* ===== HELPERS ===== */
 function broadcast(data) {
   const msg = JSON.stringify(data);
-  clients.forEach(c => c.readyState === 1 && c.send(msg));
+  clients.forEach(c => {
+    if (c.readyState === WebSocket.OPEN) c.send(msg);
+  });
 }
 
 function usersInChannel(channel) {
@@ -88,11 +91,11 @@ function usersInChannel(channel) {
 
 /* ===== WS LOGIC ===== */
 wss.on("connection", ws => {
+  ws.id = ws._socket.remotePort; // простой peer id
   ws.username = "Guest";
   ws.avatar = "/logo.svg";
   ws.channel = "общий";
   ws.voice = null;
-  ws.id = ws._socket.remotePort;
 
   clients.add(ws);
   broadcast({ type: "online", count: clients.size });
@@ -101,7 +104,7 @@ wss.on("connection", ws => {
     let data;
     try { data = JSON.parse(raw); } catch { return; }
 
-    /* TEXT JOIN */
+    /* ===== TEXT JOIN ===== */
     if (data.type === "join") {
       ws.username = data.user;
       ws.avatar = data.avatar || ws.avatar;
@@ -121,7 +124,7 @@ wss.on("connection", ws => {
       });
     }
 
-    /* TEXT MESSAGE */
+    /* ===== TEXT MESSAGE ===== */
     if (data.type === "message") {
       const file = path.join(CHANNELS, data.channel + ".json");
       if (!fs.existsSync(file)) fs.writeFileSync(file, "[]");
@@ -133,10 +136,11 @@ wss.on("connection", ws => {
       broadcast(data);
     }
 
-    /* ===== VOICE ===== */
+    /* ===== VOICE JOIN ===== */
     if (data.type === "voice-join") {
       const ch = data.channel;
       ws.voice = ch;
+
       if (!voiceChannels[ch]) voiceChannels[ch] = new Set();
       voiceChannels[ch].add(ws);
 
@@ -150,6 +154,7 @@ wss.on("connection", ws => {
       });
     }
 
+    /* ===== VOICE LEAVE ===== */
     if (data.type === "voice-leave") {
       const ch = ws.voice;
       if (ch && voiceChannels[ch]) {
@@ -159,6 +164,7 @@ wss.on("connection", ws => {
       ws.voice = null;
     }
 
+    /* ===== WEBRTC SIGNALING ===== */
     if (
       data.type === "voice-offer" ||
       data.type === "voice-answer" ||
@@ -166,10 +172,32 @@ wss.on("connection", ws => {
     ) {
       clients.forEach(c => {
         if (c.id === data.to) {
-          c.send(JSON.stringify({ ...data, from: ws.id }));
+          c.send(JSON.stringify({
+            ...data,
+            from: ws.id
+          }));
         }
       });
     }
   });
 
-  ws.on("close",
+  ws.on("close", () => {
+    clients.delete(ws);
+
+    if (ws.voice && voiceChannels[ws.voice]) {
+      voiceChannels[ws.voice].delete(ws);
+    }
+
+    broadcast({ type: "online", count: clients.size });
+    broadcast({
+      type: "users",
+      users: usersInChannel(ws.channel)
+    });
+  });
+});
+
+/* ===== START ===== */
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, () => {
+  console.log("🚀 FASTMOST running on port", PORT);
+});
