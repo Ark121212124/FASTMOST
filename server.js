@@ -1,5 +1,6 @@
 const http = require("http");
 const fs = require("fs");
+const path = require("path");
 const WebSocket = require("ws");
 const crypto = require("crypto");
 const multer = require("multer");
@@ -34,7 +35,8 @@ const server = http.createServer((req, res) => {
 
       if (req.url === "/register") {
         if (users.find(u => u.username === username)) {
-          res.writeHead(400); return res.end();
+          res.writeHead(400);
+          return res.end();
         }
         const t = token();
         users.push({
@@ -67,7 +69,7 @@ const server = http.createServer((req, res) => {
   if (req.method === "POST" && req.url === "/upload") {
     upload.single("file")(req, res, () => {
       const name = req.file.filename + "-" + req.file.originalname;
-      fs.renameSync(req.file.path, "uploads/" + name);
+      fs.renameSync(req.file.path, path.join("uploads", name));
 
       broadcast({
         type: "file",
@@ -81,17 +83,45 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // STATIC
-  const filePath =
-    req.url.startsWith("/uploads")
-      ? "." + req.url
-      : "./public" + (req.url === "/" ? "/index.html" : req.url);
+  // STATIC FILES
+  let filePath;
+
+  if (req.url.startsWith("/uploads/")) {
+    filePath = path.join(__dirname, req.url);
+  } else {
+    filePath = path.join(
+      __dirname,
+      "public",
+      req.url === "/" ? "index.html" : req.url
+    );
+  }
+
+  // защита от ../
+  if (!filePath.startsWith(path.join(__dirname, "public")) &&
+      !filePath.startsWith(path.join(__dirname, "uploads"))) {
+    res.writeHead(403);
+    return res.end();
+  }
+
+  const ext = path.extname(filePath);
+  const types = {
+    ".html": "text/html",
+    ".css": "text/css",
+    ".js": "application/javascript",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".json": "application/json"
+  };
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404);
       res.end();
     } else {
+      res.writeHead(200, {
+        "Content-Type": types[ext] || "application/octet-stream"
+      });
       res.end(data);
     }
   });
