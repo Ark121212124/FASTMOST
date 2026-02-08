@@ -19,7 +19,15 @@
 </div>
 
 <script>
+const u = document.getElementById("u");
+const p = document.getElementById("p");
+
 async function go(type) {
+  if (!u.value || !p.value) {
+    alert("Введите логин и пароль");
+    return;
+  }
+
   const r = await fetch("/" + type, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -29,7 +37,10 @@ async function go(type) {
     })
   });
 
-  if (!r.ok) return alert("Ошибка");
+  if (!r.ok) {
+    alert("Ошибка авторизации");
+    return;
+  }
 
   const d = await r.json();
   localStorage.setItem("token", d.token);
