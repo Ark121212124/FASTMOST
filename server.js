@@ -2,124 +2,112 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
+const multer = require("multer");
 
 const PUBLIC = path.join(__dirname, "public");
-const MSG_FILE = path.join(__dirname, "messages.json");
+const USERS_FILE = path.join(__dirname, "users.json");
+const AVATARS = path.join(__dirname, "avatars");
+const CHANNELS = path.join(__dirname, "channels");
 
-if (!fs.existsSync(MSG_FILE)) {
-  fs.writeFileSync(MSG_FILE, JSON.stringify({}));
-}
+if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, "[]");
+if (!fs.existsSync(AVATARS)) fs.mkdirSync(AVATARS);
+if (!fs.existsSync(CHANNELS)) fs.mkdirSync(CHANNELS);
+
+const upload = multer({ dest: AVATARS });
 
 /* ===== HTTP ===== */
 const server = http.createServer((req, res) => {
-  const safePath = req.url === "/" ? "/index.html" : req.url;
-  const filePath = path.join(PUBLIC, safePath);
+  if (req.method === "POST" && req.url === "/upload-avatar") {
+    upload.single("avatar")(req, res, () => {
+      res.end(JSON.stringify({ url: "/avatars/" + req.file.filename }));
+    });
+    return;
+  }
 
-  if (!filePath.startsWith(PUBLIC)) {
+  const safe = req.url === "/" ? "/index.html" : req.url;
+  const filePath = path.join(__dirname, safe.startsWith("/avatars")
+    ? safe
+    : "public" + safe
+  );
+
+  if (!filePath.startsWith(PUBLIC) && !filePath.startsWith(AVATARS)) {
     res.writeHead(403);
     return res.end();
   }
 
   fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end("Not found");
-    } else {
-      res.end(data);
-    }
+    if (err) return res.end();
+    res.end(data);
   });
 });
 
-/* ===== WEBSOCKET ===== */
+/* ===== WS ===== */
 const wss = new WebSocket.Server({ server });
-
-let clients = new Set();
-
-/* ===== HELPERS ===== */
-function loadMessages() {
-  return JSON.parse(fs.readFileSync(MSG_FILE, "utf8"));
-}
-
-function saveMessages(data) {
-  fs.writeFileSync(MSG_FILE, JSON.stringify(data, null, 2));
-}
-
-function broadcast(data) {
-  const msg = JSON.stringify(data);
-  clients.forEach(ws => {
-    if (ws.readyState === WebSocket.OPEN) ws.send(msg);
-  });
-}
+const clients = new Set();
 
 function usersInChannel(channel) {
   return [...clients]
     .filter(c => c.channel === channel)
-    .map(c => c.username);
+    .map(c => ({
+      username: c.username,
+      avatar: c.avatar
+    }));
 }
 
-/* ===== CONNECTION ===== */
+function broadcast(data) {
+  const msg = JSON.stringify(data);
+  clients.forEach(c => c.readyState === 1 && c.send(msg));
+}
+
 wss.on("connection", ws => {
   ws.username = "Guest";
+  ws.avatar = "/logo.svg";
   ws.channel = "общий";
   clients.add(ws);
 
-  // онлайн
   broadcast({ type: "online", count: clients.size });
-
-  // отправляем историю
-  const history = loadMessages();
-  ws.send(JSON.stringify({
-    type: "history",
-    messages: history[ws.channel] || []
-  }));
-
-  // пользователи
-  ws.send(JSON.stringify({
-    type: "users",
-    users: usersInChannel(ws.channel)
-  }));
 
   ws.on("message", raw => {
     const data = JSON.parse(raw);
 
-    /* ===== MESSAGE ===== */
-    if (data.type === "message") {
-      const store = loadMessages();
-      if (!store[data.channel]) store[data.channel] = [];
-
-      store[data.channel].push(data);
-      saveMessages(store);
-
-      broadcast(data);
-    }
-
-    /* ===== JOIN CHANNEL ===== */
     if (data.type === "join") {
-      ws.channel = data.channel;
       ws.username = data.user;
-
-      const store = loadMessages();
+      ws.avatar = data.avatar || ws.avatar;
+      ws.channel = data.channel;
 
       ws.send(JSON.stringify({
-        type: "history",
-        messages: store[data.channel] || []
+        type: "users",
+        users: usersInChannel(ws.channel)
       }));
 
       broadcast({
         type: "users",
-        users: usersInChannel(data.channel)
+        users: usersInChannel(ws.channel)
       });
+    }
+
+    if (data.type === "message") {
+      const file = path.join(CHANNELS, data.channel + ".json");
+      if (!fs.existsSync(file)) {
+        fs.writeFileSync(file, JSON.stringify([]));
+      }
+
+      const messages = JSON.parse(fs.readFileSync(file));
+      messages.push(data);
+      fs.writeFileSync(file, JSON.stringify(messages, null, 2));
+
+      broadcast(data);
     }
   });
 
   ws.on("close", () => {
     clients.delete(ws);
     broadcast({ type: "online", count: clients.size });
+    broadcast({
+      type: "users",
+      users: usersInChannel(ws.channel)
+    });
   });
 });
 
-/* ===== START ===== */
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, () =>
-  console.log("🚀 FASTMOST running on port", PORT)
-);
+server.listen(process.env.PORT || 10000);
