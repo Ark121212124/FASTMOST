@@ -25,7 +25,7 @@ function token() {
 
 const server = http.createServer((req, res) => {
 
-  // ===== AUTH =====
+  // AUTH
   if (req.method === "POST" && ["/login","/register"].includes(req.url)) {
     let body = "";
     req.on("data", c => body += c);
@@ -65,7 +65,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ===== FILE UPLOAD =====
+  // FILE UPLOAD
   if (req.method === "POST" && req.url === "/upload") {
     upload.single("file")(req, res, () => {
       const name = req.file.filename + "-" + req.file.originalname;
@@ -84,26 +84,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ===== STATIC =====
-  let filePath;
-
-  if (req.url.startsWith("/uploads/")) {
-    filePath = path.join(__dirname, req.url);
-  } else {
-    filePath = path.join(
-      __dirname,
-      "public",
-      req.url === "/" ? "index.html" : req.url
-    );
-  }
-
-  if (
-    !filePath.startsWith(path.join(__dirname, "public")) &&
-    !filePath.startsWith(path.join(__dirname, "uploads"))
-  ) {
-    res.writeHead(403);
-    return res.end();
-  }
+  // STATIC
+  let filePath =
+    req.url.startsWith("/uploads/")
+      ? path.join(__dirname, req.url)
+      : path.join(__dirname, "public", req.url === "/" ? "index.html" : req.url);
 
   const ext = path.extname(filePath);
   const types = {
@@ -129,7 +114,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// ===== WEBSOCKET =====
+// WEBSOCKET
 const wss = new WebSocket.Server({ server });
 let sockets = [];
 
@@ -139,12 +124,10 @@ function broadcast(data) {
 
 wss.on("connection", ws => {
   sockets.push(ws);
-
   broadcast({ type: "online", count: sockets.length });
 
   ws.on("message", msg => {
-    const data = JSON.parse(msg);
-    broadcast(data);
+    broadcast(JSON.parse(msg));
   });
 
   ws.on("close", () => {
@@ -153,7 +136,6 @@ wss.on("connection", ws => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () =>
-  console.log("🚀 FASTMOST running on port", PORT)
+server.listen(process.env.PORT || 3000, () =>
+  console.log("🚀 FASTMOST running")
 );
