@@ -122,3 +122,22 @@ body {
   padding: 0 14px;
   cursor: pointer;
 }
+.users {
+  width: 200px;
+  background: #15151c;
+  padding: 10px;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.user-item img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
