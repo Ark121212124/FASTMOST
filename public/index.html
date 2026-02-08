@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FASTMOST</title>
+
   <link rel="stylesheet" href="/styles.css">
   <link rel="icon" href="/logo.svg">
 
@@ -24,8 +25,10 @@
   </aside>
 
   <main class="chat-area">
+
     <header class="chat-header">
       FASTMOST
+      <span id="online" class="online">🟢 Онлайн: 1</span>
     </header>
 
     <div id="messages" class="messages"></div>
@@ -37,10 +40,14 @@
       <input type="file" id="file" hidden>
       <button onclick="file.click()">📎</button>
     </div>
-  </main>
 
+  </main>
 </div>
 
+<!-- Кнопка голоса -->
+<button onclick="startVoice()" class="voice-btn">🎙️</button>
+
 <script src="/script.js"></script>
+<script src="/voice.js"></script>
 </body>
 </html>
