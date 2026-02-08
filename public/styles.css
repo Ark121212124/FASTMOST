@@ -1,17 +1,17 @@
+/* ===== RESET ===== */
 * {
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 body {
   margin: 0;
-  background: #0b0d14;
-  color: #fff;
+  background: #0e0e12;
+  color: #dcddde;
+  overflow: hidden;
 }
 
-/* =========================
-   AUTH / ONBOARD
-========================= */
+/* ===== AUTH / ONBOARD ===== */
 .auth-box,
 .onboard {
   height: 100vh;
@@ -23,10 +23,12 @@ body {
 }
 
 .auth-box input {
-  width: 220px;
-  padding: 10px;
-  border-radius: 8px;
+  width: 240px;
+  padding: 12px;
+  border-radius: 6px;
   border: none;
+  background: #202225;
+  color: #fff;
 }
 
 .primary {
@@ -34,151 +36,127 @@ body {
   color: #fff;
   border: none;
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
-/* =========================
-   MAIN LAYOUT
-========================= */
-.layout {
+/* ===== APP GRID ===== */
+.app {
   display: flex;
   height: 100vh;
-  overflow: hidden;
 }
 
-/* =========================
-   PROFILE BAR (LEFT)
-========================= */
-.profile-bar {
-  width: 90px;
-  background: #0f1220;
+/* ===== SERVERS BAR ===== */
+.sidebar {
+  width: 72px;
+  background: #060607;
+  padding: 10px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 0;
+  gap: 12px;
 }
 
-.profile-card {
+.server {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #5865f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-radius 0.2s, background 0.2s;
+}
+
+.server:hover {
+  border-radius: 12px;
+  background: #4752c4;
+}
+
+/* ===== CHANNELS ===== */
+.channels {
+  width: 240px;
+  background: #2b2d31;
   display: flex;
   flex-direction: column;
+}
+
+.channels-title {
+  padding: 12px 12px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #949ba4;
+  text-transform: uppercase;
+}
+
+#textChannels {
+  padding: 0 8px;
+}
+
+.channel {
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #b5bac1;
+  display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-}
-
-.profile-name {
-  text-align: center;
-  font-size: 12px;
-}
-
-.status {
-  font-size: 11px;
-}
-
-.status.online {
-  color: #3ba55d;
-}
-
-.profile-actions {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.profile-actions button {
-  background: none;
-  border: none;
-  color: #aaa;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-/* =========================
-   CHANNELS PANEL
-========================= */
-.channels-panel {
-  width: 240px;
-  background: #111428;
-  padding: 12px;
-  overflow-y: auto;
-}
-
-.section {
-  margin-bottom: 22px;
-}
-
-.section-title {
-  font-size: 12px;
-  opacity: 0.6;
-  margin-bottom: 6px;
-  padding-left: 4px;
-}
-
-.channel-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.channel {
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  opacity: 0.8;
-}
-
 .channel:hover {
-  background: #1b1f3a;
-  opacity: 1;
+  background: #35373c;
+  color: #fff;
 }
 
 .channel.active {
-  background: #1f254b;
-  opacity: 1;
+  background: #404249;
+  color: #fff;
 }
 
-.channel.voice {
-  color: #8ea1ff;
-}
-
-.add-btn {
-  margin-top: 6px;
+.add-channel {
+  margin: 6px 12px;
+  padding: 6px;
   background: none;
   border: none;
-  color: #8ea1ff;
+  color: #949ba4;
   cursor: pointer;
   text-align: left;
-  padding: 4px 6px;
 }
 
-/* =========================
-   CHAT PANEL
-========================= */
-.chat-panel {
+.add-channel:hover {
+  color: #fff;
+}
+
+/* ===== CHAT AREA ===== */
+.chat-area {
   flex: 1;
+  background: #313338;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at top, #141933, #0b0d14);
 }
 
-/* HEADER */
+/* ===== CHAT HEADER ===== */
 .chat-header {
-  padding: 14px 16px;
+  height: 48px;
+  background: #313338;
+  border-bottom: 1px solid #1f1f23;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #1e223a;
-  background: rgba(15, 18, 32, 0.85);
+  justify-content: space-between;
+  padding: 0 16px;
 }
 
-/* MESSAGES */
+#channelName {
+  font-weight: 600;
+}
+
+#online {
+  font-size: 13px;
+  color: #b5bac1;
+}
+
+/* ===== MESSAGES ===== */
 .messages {
   flex: 1;
   padding: 16px;
@@ -190,77 +168,98 @@ body {
 }
 
 .user {
-  font-weight: bold;
-  color: #8ea1ff;
+  font-weight: 600;
+  color: #fff;
 }
 
 .time {
   font-size: 12px;
-  opacity: 0.5;
+  color: #949ba4;
   margin-left: 6px;
 }
 
 .text {
-  margin-top: 4px;
+  margin-top: 2px;
   line-height: 1.4;
 }
 
-/* INPUT */
+/* ===== INPUT ===== */
 .chat-input {
+  padding: 12px;
+  background: #383a40;
   display: flex;
   gap: 8px;
-  padding: 12px;
-  background: #0f1220;
-  border-top: 1px solid #1e223a;
 }
 
 .chat-input input {
   flex: 1;
-  padding: 12px;
-  border-radius: 8px;
+  background: #1e1f22;
   border: none;
-  outline: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #fff;
 }
 
 .chat-input button {
   background: #5865f2;
   border: none;
   border-radius: 8px;
-  color: white;
+  color: #fff;
   padding: 0 16px;
   cursor: pointer;
 }
 
-/* =========================
-   USERS PANEL (RIGHT)
-========================= */
-.users-panel {
-  width: 200px;
-  background: #0f1220;
-  padding: 12px;
-  overflow-y: auto;
+.chat-input button:hover {
+  background: #4752c4;
 }
 
-.users-title {
-  font-size: 13px;
-  margin-bottom: 10px;
-  opacity: 0.7;
+/* ===== USERS ===== */
+.users {
+  width: 240px;
+  background: #2b2d31;
+  padding: 12px;
 }
 
 .user-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 6px;
   border-radius: 6px;
 }
 
 .user-item:hover {
-  background: #1b1f3a;
+  background: #35373c;
 }
 
 .user-item img {
   width: 28px;
   height: 28px;
   border-radius: 50%;
+}
+
+.user-item span {
+  color: #dcddde;
+}
+
+/* ===== VOICE BAR ===== */
+.voice-bar {
+  background: #232428;
+  padding: 10px;
+  border-top: 1px solid #1f1f23;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.voice-controls button {
+  background: none;
+  border: none;
+  color: #dcddde;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.voice-controls button:hover {
+  color: #fff;
 }
