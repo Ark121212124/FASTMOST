@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FASTMOST</title>
 
   <link rel="stylesheet" href="/styles.css">
@@ -16,81 +16,86 @@
 </head>
 <body>
 
-<div class="app">
+<div class="layout">
 
-  <!-- SERVERS -->
-  <aside class="sidebar">
-    <div class="server">
-      <img src="/logo.svg" width="36">
-    </div>
-  </aside>
-
-  <!-- CHANNELS -->
-  <aside class="channels">
-    <div class="channels-title">ТЕКСТ</div>
-
-    <div id="textChannels">
-      <div class="channel active" onclick="switchChannel('общий')">
-        # общий
+  <!-- ===== LEFT PROFILE ===== -->
+  <aside class="profile-bar">
+    <div class="profile-card">
+      <img src="/logo.svg" class="avatar">
+      <div class="profile-name">
+        <div id="username">User</div>
+        <span class="status online">● Online</span>
       </div>
     </div>
 
-    <button class="add-channel" onclick="createChannel()">
-      ＋ канал
-    </button>
-
-    <div class="channels-title">ГОЛОС</div>
-
-    <div id="voiceChannels">
-      <div class="channel" onclick="joinVoice('Общий')">
-        🔊 Общий
-      </div>
+    <div class="profile-actions">
+      <button title="Настройки">⚙</button>
+      <button title="Выход" onclick="logout()">⎋</button>
     </div>
-
-    <button class="add-channel" onclick="
-      const n = prompt('Название voice-канала');
-      if(n) {
-        const d = document.createElement('div');
-        d.className = 'channel';
-        d.textContent = '🔊 ' + n;
-        d.onclick = () => joinVoice(n);
-        document.getElementById('voiceChannels').appendChild(d);
-      }
-    ">
-      ＋ voice
-    </button>
   </aside>
 
-  <!-- CHAT -->
-  <main class="chat-area">
+  <!-- ===== CHANNELS ===== -->
+  <aside class="channels-panel">
+
+    <div class="section">
+      <div class="section-title">ТЕКСТОВЫЕ КАНАЛЫ</div>
+      <div id="textChannels" class="channel-list">
+        <div class="channel active" onclick="switchChannel('общий')">
+          # общий
+        </div>
+      </div>
+      <button class="add-btn" onclick="createTextChannel()">＋ Создать</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ГОЛОСОВЫЕ КАНАЛЫ</div>
+      <div id="voiceChannels" class="channel-list">
+        <div class="channel voice" onclick="joinVoice('Общий')">
+          🔊 Общий
+        </div>
+      </div>
+      <button class="add-btn" onclick="createVoiceChannel()">＋ Создать</button>
+    </div>
+
+  </aside>
+
+  <!-- ===== CHAT ===== -->
+  <main class="chat-panel">
 
     <header class="chat-header">
-      <span id="channelName"># общий</span>
-      <span id="online">🟢 Онлайн: 1</span>
+      <div id="channelName"># общий</div>
+      <div id="online">🟢 Онлайн: 1</div>
     </header>
 
-    <div class="content">
-
-      <!-- MESSAGES -->
-      <div id="messages" class="messages"></div>
-
-      <!-- USERS -->
-      <aside class="users" id="users">
-        <!-- users rendered by script.js -->
-      </aside>
-
-    </div>
+    <div id="messages" class="messages"></div>
 
     <div class="chat-input">
-      <input id="msg" placeholder="Сообщение">
+      <input id="msg" placeholder="Сообщение..." autocomplete="off">
       <button onclick="send()">➤</button>
     </div>
 
   </main>
 
+  <!-- ===== USERS ===== -->
+  <aside class="users-panel">
+    <div class="users-title">Онлайн</div>
+    <div id="users"></div>
+  </aside>
+
 </div>
 
 <script src="/script.js"></script>
 <script src="/voice.js"></script>
+
+<script>
+  document.getElementById("username").textContent =
+    localStorage.getItem("username") || "Guest";
+
+  function logout() {
+    localStorage.clear();
+    location.href = "/auth.html";
+  }
+</script>
+
 </body>
 </html>
