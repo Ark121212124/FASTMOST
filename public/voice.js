@@ -2,102 +2,109 @@ const voicePeers = {};
 let localStream = null;
 let currentVoice = null;
 
-async function getMic() {
-  if (!localStream) {
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  }
-  return localStream;
+const wsVoiceSend = data => {
+  if (ws.readyState === 1) ws.send(JSON.stringify(data));
+};
+
+/* ===== JOIN VOICE ===== */
+async function joinVoice(channel) {
+  if (currentVoice === channel) return;
+  leaveVoice();
+
+  currentVoice = channel;
+
+  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+  wsVoiceSend({
+    type: "voice-join",
+    channel
+  });
 }
 
+/* ===== LEAVE VOICE ===== */
+function leaveVoice() {
+  if (!currentVoice) return;
+
+  wsVoiceSend({
+    type: "voice-leave"
+  });
+
+  Object.values(voicePeers).forEach(pc => pc.close());
+  Object.keys(voicePeers).forEach(k => delete voicePeers[k]);
+
+  localStream?.getTracks().forEach(t => t.stop());
+  localStream = null;
+  currentVoice = null;
+}
+
+/* ===== CREATE PEER ===== */
 function createPeer(id) {
   const pc = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
+  voicePeers[id] = pc;
+
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
   pc.onicecandidate = e => {
     if (e.candidate) {
-      ws.send(JSON.stringify({
+      wsVoiceSend({
         type: "voice-ice",
         to: id,
         candidate: e.candidate
-      }));
+      });
     }
   };
 
   pc.ontrack = e => {
-    const audio = document.createElement("audio");
+    let audio = document.getElementById("voice-" + id);
+    if (!audio) {
+      audio = document.createElement("audio");
+      audio.id = "voice-" + id;
+      audio.autoplay = true;
+      document.body.appendChild(audio);
+    }
     audio.srcObject = e.streams[0];
-    audio.autoplay = true;
-    document.body.appendChild(audio);
   };
 
-  voicePeers[id] = pc;
   return pc;
 }
 
-async function joinVoice(name) {
-  if (currentVoice === name) return;
-  currentVoice = name;
-
-  await getMic();
-
-  ws.send(JSON.stringify({
-    type: "voice-join",
-    channel: name
-  }));
-}
-
-function leaveVoice() {
-  Object.values(voicePeers).forEach(p => p.close());
-  for (const k in voicePeers) delete voicePeers[k];
-
-  if (localStream) {
-    localStream.getTracks().forEach(t => t.stop());
-    localStream = null;
-  }
-
-  ws.send(JSON.stringify({ type: "voice-leave" }));
-  currentVoice = null;
-}
-
-// ===== SIGNALING =====
+/* ===== SIGNALING ===== */
 ws.addEventListener("message", async e => {
-  const data = JSON.parse(e.data);
+  const d = JSON.parse(e.data);
 
-  if (data.type === "voice-user") {
-    const pc = createPeer(data.userId);
-    (await getMic()).getTracks().forEach(t => pc.addTrack(t, localStream));
-
+  if (d.type === "voice-user") {
+    const pc = createPeer(d.userId);
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    ws.send(JSON.stringify({
+    wsVoiceSend({
       type: "voice-offer",
-      to: data.userId,
+      to: d.userId,
       offer
-    }));
+    });
   }
 
-  if (data.type === "voice-offer") {
-    const pc = createPeer(data.from);
-    await pc.setRemoteDescription(data.offer);
-    (await getMic()).getTracks().forEach(t => pc.addTrack(t, localStream));
-
+  if (d.type === "voice-offer") {
+    const pc = createPeer(d.from);
+    await pc.setRemoteDescription(d.offer);
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
-    ws.send(JSON.stringify({
+    wsVoiceSend({
       type: "voice-answer",
-      to: data.from,
+      to: d.from,
       answer
-    }));
+    });
   }
 
-  if (data.type === "voice-answer") {
-    await voicePeers[data.from]?.setRemoteDescription(data.answer);
+  if (d.type === "voice-answer") {
+    await voicePeers[d.from]?.setRemoteDescription(d.answer);
   }
 
-  if (data.type === "voice-ice") {
-    await voicePeers[data.from]?.addIceCandidate(data.candidate);
+  if (d.type === "voice-ice") {
+    await voicePeers[d.from]?.addIceCandidate(d.candidate);
   }
 });
