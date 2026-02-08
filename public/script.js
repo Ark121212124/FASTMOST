@@ -3,23 +3,39 @@ const ws = new WebSocket(
 );
 
 const messages = document.getElementById("messages");
+const username = localStorage.getItem("username") || "Guest";
 
 ws.onmessage = e => {
-  const d = document.createElement("div");
-  d.textContent = e.data;
-  messages.appendChild(d);
+  const data = JSON.parse(e.data);
+
+  if (data.type === "online") {
+    document.getElementById("online").textContent =
+      "🟢 Онлайн: " + data.count;
+    return;
+  }
+
+  const msg = document.createElement("div");
+  msg.className = "message";
+
+  msg.innerHTML = `
+    <span class="user">${data.user}</span>
+    <span class="time">${data.time}</span>
+    <div class="text">${data.text}</div>
+  `;
+
+  messages.appendChild(msg);
   messages.scrollTop = messages.scrollHeight;
 };
 
 function send() {
   if (!msg.value) return;
-  ws.send(msg.value);
-  msg.value = "";
-}
 
-async function sendFile() {
-  if (!file.files[0]) return;
-  const f = new FormData();
-  f.append("file", file.files[0]);
-  await fetch("/upload", { method: "POST", body: f });
+  ws.send(JSON.stringify({
+    type: "message",
+    user: username,
+    text: msg.value,
+    time: new Date().toLocaleTimeString().slice(0,5)
+  }));
+
+  msg.value = "";
 }
