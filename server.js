@@ -25,7 +25,7 @@ function token() {
 
 const server = http.createServer((req, res) => {
 
-  // AUTH
+  // ===== AUTH =====
   if (req.method === "POST" && ["/login","/register"].includes(req.url)) {
     let body = "";
     req.on("data", c => body += c);
@@ -65,7 +65,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // FILE UPLOAD
+  // ===== FILE UPLOAD =====
   if (req.method === "POST" && req.url === "/upload") {
     upload.single("file")(req, res, () => {
       const name = req.file.filename + "-" + req.file.originalname;
@@ -73,9 +73,10 @@ const server = http.createServer((req, res) => {
 
       broadcast({
         type: "file",
-        user: req.headers["x-user"],
+        user: req.headers["x-user"] || "unknown",
         name: req.file.originalname,
-        url: "/uploads/" + name
+        url: "/uploads/" + name,
+        time: new Date().toLocaleTimeString().slice(0,5)
       });
 
       res.end("ok");
@@ -83,7 +84,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // STATIC FILES
+  // ===== STATIC =====
   let filePath;
 
   if (req.url.startsWith("/uploads/")) {
@@ -96,16 +97,17 @@ const server = http.createServer((req, res) => {
     );
   }
 
-  // защита от ../
-  if (!filePath.startsWith(path.join(__dirname, "public")) &&
-      !filePath.startsWith(path.join(__dirname, "uploads"))) {
+  if (
+    !filePath.startsWith(path.join(__dirname, "public")) &&
+    !filePath.startsWith(path.join(__dirname, "uploads"))
+  ) {
     res.writeHead(403);
     return res.end();
   }
 
   const ext = path.extname(filePath);
   const types = {
-    ".html": "text/html",
+    ".html": "text/html; charset=utf-8",
     ".css": "text/css",
     ".js": "application/javascript",
     ".svg": "image/svg+xml",
@@ -127,15 +129,18 @@ const server = http.createServer((req, res) => {
   });
 });
 
+// ===== WEBSOCKET =====
 const wss = new WebSocket.Server({ server });
 let sockets = [];
 
 function broadcast(data) {
-  sockets.forEach(s => s.send(JSON.stringify(data)));
+  sockets.forEach(s => s.readyState === 1 && s.send(JSON.stringify(data)));
 }
 
 wss.on("connection", ws => {
   sockets.push(ws);
+
+  broadcast({ type: "online", count: sockets.length });
 
   ws.on("message", msg => {
     const data = JSON.parse(msg);
@@ -144,6 +149,7 @@ wss.on("connection", ws => {
 
   ws.on("close", () => {
     sockets = sockets.filter(s => s !== ws);
+    broadcast({ type: "online", count: sockets.length });
   });
 });
 
