@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta name="viewport" content="width=device-width">
-<link rel="stylesheet" href="style.css">
-<title>FASTMOST — Вход</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FASTMOST — Вход</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 
 <div class="auth-box">
   <img src="/logo.svg" width="140">
+
   <input id="u" placeholder="Логин">
   <input id="p" type="password" placeholder="Пароль">
 
@@ -20,6 +22,7 @@
 async function go(type) {
   const r = await fetch("/" + type, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       username: u.value,
       password: p.value
