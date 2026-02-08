@@ -28,14 +28,37 @@
   <!-- CHANNELS -->
   <aside class="channels">
     <div class="channels-title">ТЕКСТ</div>
+
     <div id="textChannels">
-      <div class="channel" onclick="switchChannel('общий')"># общий</div>
+      <div class="channel active" onclick="switchChannel('общий')">
+        # общий
+      </div>
     </div>
 
-    <button class="add-channel" onclick="createChannel()">+ канал</button>
+    <button class="add-channel" onclick="createChannel()">
+      ＋ канал
+    </button>
 
     <div class="channels-title">ГОЛОС</div>
-    <div class="channel">🔊 Общий</div>
+
+    <div id="voiceChannels">
+      <div class="channel" onclick="joinVoice('Общий')">
+        🔊 Общий
+      </div>
+    </div>
+
+    <button class="add-channel" onclick="
+      const n = prompt('Название voice-канала');
+      if(n) {
+        const d = document.createElement('div');
+        d.className = 'channel';
+        d.textContent = '🔊 ' + n;
+        d.onclick = () => joinVoice(n);
+        document.getElementById('voiceChannels').appendChild(d);
+      }
+    ">
+      ＋ voice
+    </button>
   </aside>
 
   <!-- CHAT -->
@@ -46,7 +69,17 @@
       <span id="online">🟢 Онлайн: 1</span>
     </header>
 
-    <div id="messages" class="messages"></div>
+    <div class="content">
+
+      <!-- MESSAGES -->
+      <div id="messages" class="messages"></div>
+
+      <!-- USERS -->
+      <aside class="users" id="users">
+        <!-- users rendered by script.js -->
+      </aside>
+
+    </div>
 
     <div class="chat-input">
       <input id="msg" placeholder="Сообщение">
