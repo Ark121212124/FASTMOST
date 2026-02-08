@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="/logo.svg">
+<title>FASTMOST</title>
+
+<script>
+if (!localStorage.getItem("token")) {
+  location.href = "/onboarding.html";
+}
+</script>
+</head>
+<body>
+
+<div id="loader">
+  <img src="/logo.svg" width="220">
+</div>
+
+<div class="logo-wrapper">
+  <img src="/logo.svg" class="logo-hover" width="160">
+</div>
+
+<div id="chat">
+  <div id="messages"></div>
+
+  <div class="input-row">
+    <input id="msg" placeholder="Сообщение">
+    <button class="primary" onclick="send()">➤</button>
+    <input type="file" id="file">
+    <button onclick="sendFile()">📎</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

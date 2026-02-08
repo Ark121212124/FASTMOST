@@ -1,0 +1,27 @@
+<svg width="260" height="64" viewBox="0 0 260 64"
+     xmlns="http://www.w3.org/2000/svg">
+
+  <rect x="0" y="0" width="64" height="64" rx="16" fill="#4f7cff"/>
+
+  <path d="M20 38 L32 22 L44 38"
+        stroke="white"
+        stroke-width="4"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <path d="M24 42 L32 32 L40 42"
+        stroke="white"
+        stroke-width="4"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <text x="84" y="42"
+        font-family="Inter, Arial, Helvetica, sans-serif"
+        font-size="26"
+        font-weight="700"
+        fill="#4f7cff">
+    FASTMOST
+  </text>
+</svg>
