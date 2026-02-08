@@ -325,4 +325,50 @@ body {
   margin-left: auto;
   font-size: 14px;
 }
+/* ===== VOICE OVERLAY ===== */
+.voice-overlay {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 220px;
+  background: #1e1f22;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 999;
+  font-size: 13px;
+}
+
+.voice-overlay.hidden {
+  display: none;
+}
+
+.voice-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.voice-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.voice-user img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+.voice-user.speaking {
+  background: rgba(88,101,242,0.25);
+}
+
+.voice-user .icons {
+  margin-left: auto;
+  opacity: 0.8;
+}
 
