@@ -30,7 +30,7 @@
 
     <div class="channels-title">ТЕКСТ</div>
     <div id="textChannels">
-      <div class="channel active" onclick="switchChannel('общий')">
+      <div class="channel active" data-name="общий">
         # общий
       </div>
     </div>
@@ -38,13 +38,13 @@
 
     <div class="channels-title">ГОЛОС</div>
     <div id="voiceChannels">
-      <div class="channel" onclick="joinVoice('Общий')">
+      <div class="channel voice" data-name="Общий">
         🔊 Общий
       </div>
     </div>
     <button class="add-channel" onclick="createVoiceChannel()">＋ voice</button>
 
-    <!-- ===== USER PANEL (BOTTOM) ===== -->
+    <!-- ===== USER PANEL ===== -->
     <div class="user-panel">
       <div class="user-info">
         <img id="profileAvatar" src="/logo.svg">
