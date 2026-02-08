@@ -9,6 +9,33 @@ body {
   color: #fff;
 }
 
+/* ===== AUTH / ONBOARD ===== */
+.auth-box, .onboard {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.auth-box input {
+  width: 220px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+.primary {
+  background: #5865f2;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* ===== APP ===== */
 .app {
   display: flex;
   height: 100vh;
@@ -31,38 +58,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* CHANNELS */
-.channels {
-  width: 220px;
-  background: #15151c;
-  padding: 10px;
-}
-
-.channels-title {
-  font-size: 12px;
-  opacity: 0.6;
-  margin: 10px 0 4px;
-}
-
-.channel {
-  padding: 6px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.channel:hover {
-  background: #1f1f2a;
-}
-
-.add-channel {
-  margin-top: 10px;
-  width: 100%;
-  background: none;
-  color: #8ea1ff;
-  border: none;
-  cursor: pointer;
 }
 
 /* CHAT */
