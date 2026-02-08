@@ -314,3 +314,15 @@ body {
 .user-actions button:hover {
   color: #fff;
 }
+/* ===== VOICE ACTIVITY ===== */
+.user-item.speaking {
+  background: rgba(88, 101, 242, 0.25);
+  border-left: 3px solid #5865f2;
+}
+
+.user-item.speaking::after {
+  content: "🔊";
+  margin-left: auto;
+  font-size: 14px;
+}
+
