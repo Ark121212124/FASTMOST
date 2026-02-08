@@ -1,162 +1,154 @@
-/* ===== RESET ===== */
 * {
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 body {
   margin: 0;
-  background: #0e0e12;
-  color: #dcddde;
+  background: #0f0f14;
+  color: #fff;
+  height: 100vh;
   overflow: hidden;
 }
 
-/* ===== AUTH / ONBOARD ===== */
-.auth-box,
-.onboard {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-}
-
-.auth-box input {
-  width: 240px;
-  padding: 12px;
-  border-radius: 6px;
-  border: none;
-  background: #202225;
-  color: #fff;
-}
-
-.primary {
-  background: #5865f2;
-  color: #fff;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* ===== APP GRID ===== */
+/* ===== APP LAYOUT ===== */
 .app {
   display: flex;
   height: 100vh;
 }
 
-/* ===== SERVERS BAR ===== */
+/* ===== SERVERS ===== */
 .sidebar {
   width: 72px;
-  background: #060607;
-  padding: 10px 0;
+  background: #0b0b10;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  justify-content: center;
+  padding-top: 12px;
 }
 
 .server {
   width: 48px;
   height: 48px;
-  border-radius: 16px;
   background: #5865f2;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: border-radius 0.2s, background 0.2s;
-}
-
-.server:hover {
-  border-radius: 12px;
-  background: #4752c4;
 }
 
 /* ===== CHANNELS ===== */
 .channels {
-  width: 240px;
-  background: #2b2d31;
+  width: 260px;
+  background: #15151c;
+  padding: 12px;
   display: flex;
   flex-direction: column;
 }
 
 .channels-title {
-  padding: 12px 12px 6px;
   font-size: 12px;
-  font-weight: 600;
-  color: #949ba4;
-  text-transform: uppercase;
-}
-
-#textChannels {
-  padding: 0 8px;
+  opacity: 0.6;
+  margin: 10px 0 6px;
 }
 
 .channel {
-  padding: 6px 8px;
+  padding: 8px 10px;
   border-radius: 6px;
   cursor: pointer;
-  color: #b5bac1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  margin-bottom: 2px;
 }
 
 .channel:hover {
-  background: #35373c;
-  color: #fff;
+  background: #1f1f2a;
 }
 
 .channel.active {
-  background: #404249;
-  color: #fff;
+  background: #5865f2;
+}
+
+.channel.voice {
+  opacity: 0.9;
 }
 
 .add-channel {
-  margin: 6px 12px;
+  margin: 6px 0;
+  background: transparent;
+  border: 1px dashed #333;
+  color: #aaa;
+  border-radius: 6px;
   padding: 6px;
-  background: none;
-  border: none;
-  color: #949ba4;
   cursor: pointer;
-  text-align: left;
 }
 
 .add-channel:hover {
   color: #fff;
+  border-color: #5865f2;
 }
 
-/* ===== CHAT AREA ===== */
+/* ===== USER PANEL ===== */
+.user-panel {
+  margin-top: auto;
+  background: #111118;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.user-info {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.user-info img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.user-text {
+  font-size: 14px;
+}
+
+.status {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.user-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.user-actions button {
+  background: #1f1f2a;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.user-actions button:hover {
+  background: #5865f2;
+}
+
+/* ===== CHAT ===== */
 .chat-area {
   flex: 1;
-  background: #313338;
   display: flex;
   flex-direction: column;
+  background: #0f0f14;
 }
 
-/* ===== CHAT HEADER ===== */
 .chat-header {
-  height: 48px;
-  background: #313338;
-  border-bottom: 1px solid #1f1f23;
+  padding: 14px;
+  background: #15151c;
+  border-bottom: 1px solid #222;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
 }
 
-#channelName {
-  font-weight: 600;
-}
-
-#online {
-  font-size: 13px;
-  color: #b5bac1;
-}
-
-/* ===== MESSAGES ===== */
 .messages {
   flex: 1;
   padding: 16px;
@@ -164,39 +156,37 @@ body {
 }
 
 .message {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .user {
-  font-weight: 600;
-  color: #fff;
+  font-weight: bold;
+  color: #8ea1ff;
 }
 
 .time {
   font-size: 12px;
-  color: #949ba4;
+  opacity: 0.5;
   margin-left: 6px;
 }
 
 .text {
-  margin-top: 2px;
-  line-height: 1.4;
+  margin-top: 4px;
 }
 
-/* ===== INPUT ===== */
 .chat-input {
-  padding: 12px;
-  background: #383a40;
   display: flex;
   gap: 8px;
+  padding: 12px;
+  background: #15151c;
 }
 
 .chat-input input {
   flex: 1;
-  background: #1e1f22;
-  border: none;
+  padding: 10px;
   border-radius: 8px;
-  padding: 10px 14px;
+  border: none;
+  background: #0f0f14;
   color: #fff;
 }
 
@@ -204,32 +194,29 @@ body {
   background: #5865f2;
   border: none;
   border-radius: 8px;
-  color: #fff;
-  padding: 0 16px;
+  color: white;
+  padding: 0 14px;
   cursor: pointer;
-}
-
-.chat-input button:hover {
-  background: #4752c4;
 }
 
 /* ===== USERS ===== */
 .users {
-  width: 240px;
-  background: #2b2d31;
+  width: 220px;
+  background: #15151c;
   padding: 12px;
+}
+
+.users-title {
+  font-size: 13px;
+  opacity: 0.7;
+  margin-bottom: 10px;
 }
 
 .user-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px;
-  border-radius: 6px;
-}
-
-.user-item:hover {
-  background: #35373c;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .user-item img {
@@ -238,105 +225,20 @@ body {
   border-radius: 50%;
 }
 
-.user-item span {
-  color: #dcddde;
-}
-
-/* ===== VOICE BAR ===== */
-.voice-bar {
-  background: #232428;
-  padding: 10px;
-  border-top: 1px solid #1f1f23;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.voice-controls button {
-  background: none;
-  border: none;
-  color: #dcddde;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.voice-controls button:hover {
-  color: #fff;
-}
-/* ===== USER PANEL (Discord-like) ===== */
-.user-panel {
-  margin-top: auto;
-  height: 52px;
-  background: #232428;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  border-top: 1px solid #1f1f23;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.user-info img {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-}
-
-.user-text {
-  display: flex;
-  flex-direction: column;
-  font-size: 13px;
-}
-
-.user-text .status {
-  font-size: 11px;
-  color: #949ba4;
-}
-
-.user-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.user-actions button {
-  background: none;
-  border: none;
-  color: #b5bac1;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.user-actions button:hover {
-  color: #fff;
-}
-/* ===== VOICE ACTIVITY ===== */
 .user-item.speaking {
-  background: rgba(88, 101, 242, 0.25);
-  border-left: 3px solid #5865f2;
+  color: #3ba55d;
+  font-weight: bold;
 }
 
-.user-item.speaking::after {
-  content: "🔊";
-  margin-left: auto;
-  font-size: 14px;
-}
 /* ===== VOICE OVERLAY ===== */
 .voice-overlay {
   position: fixed;
-  bottom: 80px;
+  bottom: 20px;
   right: 20px;
-  width: 220px;
-  background: #1e1f22;
+  background: #15151c;
+  padding: 12px;
   border-radius: 10px;
-  padding: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  z-index: 999;
-  font-size: 13px;
+  width: 200px;
 }
 
 .voice-overlay.hidden {
@@ -344,31 +246,24 @@ body {
 }
 
 .voice-title {
-  font-weight: 600;
+  font-size: 13px;
+  opacity: 0.7;
   margin-bottom: 8px;
-  color: #fff;
 }
 
 .voice-user {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px;
-  border-radius: 6px;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
 .voice-user img {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
 }
 
 .voice-user.speaking {
-  background: rgba(88,101,242,0.25);
+  color: #3ba55d;
 }
-
-.voice-user .icons {
-  margin-left: auto;
-  opacity: 0.8;
-}
-
