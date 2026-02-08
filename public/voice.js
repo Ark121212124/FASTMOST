@@ -1,22 +1,7 @@
 const voicePeers = {};
 let localStream = null;
-let currentVoiceChannel = null;
+let currentVoice = null;
 
-const voiceChannels = document.getElementById("voiceChannels");
-
-// ===== UI: создать голосовой канал =====
-function createVoiceChannel(name) {
-  const div = document.createElement("div");
-  div.className = "channel";
-  div.textContent = "🔊 " + name;
-  div.onclick = () => joinVoice(name);
-  voiceChannels.appendChild(div);
-}
-
-// создаём дефолтный голосовой канал
-createVoiceChannel("Общий");
-
-// ===== WebRTC helpers =====
 async function getMic() {
   if (!localStream) {
     localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -24,7 +9,7 @@ async function getMic() {
   return localStream;
 }
 
-function createPeer(userId) {
+function createPeer(id) {
   const pc = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
@@ -33,7 +18,7 @@ function createPeer(userId) {
     if (e.candidate) {
       ws.send(JSON.stringify({
         type: "voice-ice",
-        to: userId,
+        to: id,
         candidate: e.candidate
       }));
     }
@@ -46,32 +31,25 @@ function createPeer(userId) {
     document.body.appendChild(audio);
   };
 
-  voicePeers[userId] = pc;
+  voicePeers[id] = pc;
   return pc;
 }
 
-// ===== JOIN VOICE =====
-async function joinVoice(channel) {
-  if (currentVoiceChannel === channel) return;
+async function joinVoice(name) {
+  if (currentVoice === name) return;
+  currentVoice = name;
 
-  currentVoiceChannel = channel;
   await getMic();
 
   ws.send(JSON.stringify({
     type: "voice-join",
-    channel,
-    user: username
+    channel: name
   }));
-
-  alert("🎙️ Вы подключились к голосовому каналу: " + channel);
 }
 
-// ===== LEAVE VOICE =====
 function leaveVoice() {
-  for (const id in voicePeers) {
-    voicePeers[id].close();
-    delete voicePeers[id];
-  }
+  Object.values(voicePeers).forEach(p => p.close());
+  for (const k in voicePeers) delete voicePeers[k];
 
   if (localStream) {
     localStream.getTracks().forEach(t => t.stop());
@@ -79,40 +57,31 @@ function leaveVoice() {
   }
 
   ws.send(JSON.stringify({ type: "voice-leave" }));
-  currentVoiceChannel = null;
+  currentVoice = null;
 }
 
 // ===== SIGNALING =====
 ws.addEventListener("message", async e => {
   const data = JSON.parse(e.data);
 
-  // новый участник
-  if (data.type === "voice-user" && data.channel === currentVoiceChannel) {
-    const pc = createPeer(data.user);
-
-    localStream.getTracks().forEach(t =>
-      pc.addTrack(t, localStream)
-    );
+  if (data.type === "voice-user") {
+    const pc = createPeer(data.userId);
+    (await getMic()).getTracks().forEach(t => pc.addTrack(t, localStream));
 
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
     ws.send(JSON.stringify({
       type: "voice-offer",
-      to: data.user,
+      to: data.userId,
       offer
     }));
   }
 
-  // приняли offer
   if (data.type === "voice-offer") {
     const pc = createPeer(data.from);
-
     await pc.setRemoteDescription(data.offer);
-
-    localStream.getTracks().forEach(t =>
-      pc.addTrack(t, localStream)
-    );
+    (await getMic()).getTracks().forEach(t => pc.addTrack(t, localStream));
 
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
@@ -124,19 +93,11 @@ ws.addEventListener("message", async e => {
     }));
   }
 
-  // приняли answer
   if (data.type === "voice-answer") {
-    const pc = voicePeers[data.from];
-    if (pc) {
-      await pc.setRemoteDescription(data.answer);
-    }
+    await voicePeers[data.from]?.setRemoteDescription(data.answer);
   }
 
-  // ICE
   if (data.type === "voice-ice") {
-    const pc = voicePeers[data.from];
-    if (pc) {
-      await pc.addIceCandidate(data.candidate);
-    }
+    await voicePeers[data.from]?.addIceCandidate(data.candidate);
   }
 });
