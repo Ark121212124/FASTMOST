@@ -30,7 +30,7 @@
 
     <div class="channels-title">ТЕКСТ</div>
     <div id="textChannels">
-      <div class="channel active" data-name="общий">
+      <div class="channel active" data-name="общий" onclick="joinChannel('общий')">
         # общий
       </div>
     </div>
@@ -38,7 +38,7 @@
 
     <div class="channels-title">ГОЛОС</div>
     <div id="voiceChannels">
-      <div class="channel voice" data-name="Общий">
+      <div class="channel voice" data-name="Общий" onclick="joinVoice('Общий')">
         🔊 Общий
       </div>
     </div>
@@ -86,6 +86,12 @@
     <div id="users"></div>
   </aside>
 
+</div>
+
+<!-- ===== VOICE OVERLAY ===== -->
+<div id="voiceOverlay" class="voice-overlay hidden">
+  <div class="voice-title">🎙️ В голосе</div>
+  <div id="voiceUsers"></div>
 </div>
 
 <script src="/script.js"></script>
