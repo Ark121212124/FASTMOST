@@ -18,7 +18,7 @@
 
 <div class="app">
 
-  <!-- SIDEBAR -->
+  <!-- SERVERS -->
   <aside class="sidebar">
     <div class="server">
       <img src="/logo.svg" width="36">
@@ -28,19 +28,22 @@
   <!-- CHANNELS -->
   <aside class="channels">
     <div class="channels-title">ТЕКСТ</div>
-    <div id="textChannels"></div>
+    <div id="textChannels">
+      <div class="channel" onclick="switchChannel('общий')"># общий</div>
+    </div>
+
+    <button class="add-channel" onclick="createChannel()">+ канал</button>
 
     <div class="channels-title">ГОЛОС</div>
-    <div id="voiceChannels"></div>
-
-    <button class="add-channel" onclick="createChannel()">＋ канал</button>
+    <div class="channel">🔊 Общий</div>
   </aside>
 
   <!-- CHAT -->
   <main class="chat-area">
+
     <header class="chat-header">
       <span id="channelName"># общий</span>
-      <span id="online" class="online">🟢 Онлайн: 1</span>
+      <span id="online">🟢 Онлайн: 1</span>
     </header>
 
     <div id="messages" class="messages"></div>
@@ -49,6 +52,7 @@
       <input id="msg" placeholder="Сообщение">
       <button onclick="send()">➤</button>
     </div>
+
   </main>
 
 </div>
