@@ -4,6 +4,10 @@ const peers = {};
 let muted = false;
 let deafened = false;
 
+/* ===== VOICE ACTIVITY ===== */
+let analyser = null;
+let audioContext = null;
+
 /* ===== HELPERS ===== */
 function wsSend(data) {
   if (ws.readyState === 1) ws.send(JSON.stringify(data));
@@ -24,6 +28,8 @@ async function joinVoice(channel) {
     }
   });
 
+  startVoiceActivity();
+
   wsSend({
     type: "voice-join",
     channel
@@ -42,6 +48,12 @@ function leaveVoice() {
   localStream?.getTracks().forEach(t => t.stop());
   localStream = null;
   currentVoice = null;
+
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+    analyser = null;
+  }
 }
 
 /* ===== PEER ===== */
@@ -117,6 +129,28 @@ ws.addEventListener("message", async e => {
     await peers[d.from]?.addIceCandidate(d.candidate);
   }
 });
+
+/* ===== VOICE ACTIVITY ===== */
+function startVoiceActivity() {
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioContext.createMediaStreamSource(localStream);
+  analyser = audioContext.createAnalyser();
+  analyser.fftSize = 512;
+  source.connect(analyser);
+
+  const data = new Uint8Array(analyser.frequencyBinCount);
+
+  function detect() {
+    analyser.getByteFrequencyData(data);
+    const volume = data.reduce((a, b) => a + b, 0) / data.length;
+    const speaking = volume > 25;
+
+    wsSend({ type: "voice-activity", speaking });
+    requestAnimationFrame(detect);
+  }
+
+  detect();
+}
 
 /* ===== MUTE ===== */
 document.getElementById("muteBtn")?.addEventListener("click", () => {
