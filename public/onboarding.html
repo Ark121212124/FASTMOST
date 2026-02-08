@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FASTMOST</title>
   <link rel="stylesheet" href="/styles.css">
+
+  <script>
+    if (localStorage.getItem("token")) {
+      location.href = "/";
+    }
+  </script>
 </head>
 <body>
 
