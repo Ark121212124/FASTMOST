@@ -3,77 +3,66 @@ const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
 
-const PUBLIC_DIR = path.join(__dirname, "public");
-
 const server = http.createServer((req, res) => {
-  let filePath = path.join(
-    PUBLIC_DIR,
+  const filePath = path.join(
+    __dirname,
+    "public",
     req.url === "/" ? "index.html" : req.url
   );
 
-  // защита от ../
-  if (!filePath.startsWith(PUBLIC_DIR)) {
+  if (!filePath.startsWith(path.join(__dirname, "public"))) {
     res.writeHead(403);
-    return res.end("Forbidden");
-  }
-
-  // если файл без расширения — 404
-  if (!path.extname(filePath)) {
-    res.writeHead(404);
-    return res.end("Not found");
+    return res.end();
   }
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404);
-      return res.end("Not found");
+      res.end();
+    } else {
+      res.end(data);
     }
-
-    const ext = path.extname(filePath);
-
-    const types = {
-      ".html": "text/html; charset=utf-8",
-      ".css": "text/css; charset=utf-8",
-      ".js": "application/javascript; charset=utf-8",
-      ".svg": "image/svg+xml",
-      ".png": "image/png",
-      ".jpg": "image/jpeg",
-      ".json": "application/json"
-    };
-
-    res.writeHead(200, {
-      "Content-Type": types[ext] || "application/octet-stream"
-    });
-
-    res.end(data);
   });
 });
 
-// ===== WEBSOCKET =====
 const wss = new WebSocket.Server({ server });
 let sockets = [];
 
+/* 🔹 ХРАНИЛИЩЕ СООБЩЕНИЙ */
+const messagesByChannel = {
+  "общий": []
+};
+
 function broadcast(data) {
-  const msg = JSON.stringify(data);
-  sockets.forEach(s => {
-    if (s.readyState === WebSocket.OPEN) {
-      s.send(msg);
-    }
-  });
+  sockets.forEach(s =>
+    s.readyState === WebSocket.OPEN &&
+    s.send(JSON.stringify(data))
+  );
 }
 
 wss.on("connection", ws => {
   sockets.push(ws);
 
-  // онлайн
+  // 🔹 отправляем онлайн
   broadcast({ type: "online", count: sockets.length });
 
+  // 🔹 отправляем историю канала "общий"
+  ws.send(JSON.stringify({
+    type: "history",
+    channel: "общий",
+    messages: messagesByChannel["общий"]
+  }));
+
   ws.on("message", msg => {
-    try {
-      const data = JSON.parse(msg);
+    const data = JSON.parse(msg);
+
+    if (data.type === "message") {
+      if (!messagesByChannel[data.channel]) {
+        messagesByChannel[data.channel] = [];
+      }
+
+      messagesByChannel[data.channel].push(data);
       broadcast(data);
-    } catch {
-      // игнор мусор
     }
   });
 
@@ -84,6 +73,6 @@ wss.on("connection", ws => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log("🚀 FASTMOST running on port", PORT);
-});
+server.listen(PORT, () =>
+  console.log("🚀 FASTMOST running on port", PORT)
+);
