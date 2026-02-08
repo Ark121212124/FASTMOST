@@ -15,23 +15,30 @@
 </head>
 <body>
 
-<div id="loader">
-  <img src="/logo.svg" width="220">
-</div>
+<div class="app">
 
-<div class="logo-wrapper">
-  <img src="/logo.svg" class="logo-hover" width="160">
-</div>
+  <aside class="sidebar">
+    <div class="server">
+      <img src="/logo.svg" width="36">
+    </div>
+  </aside>
 
-<div id="chat">
-  <div id="messages"></div>
+  <main class="chat-area">
+    <header class="chat-header">
+      FASTMOST
+    </header>
 
-  <div class="input-row">
-    <input id="msg" placeholder="Сообщение">
-    <button class="primary" onclick="send()">➤</button>
-    <input type="file" id="file">
-    <button onclick="sendFile()">📎</button>
-  </div>
+    <div id="messages" class="messages"></div>
+
+    <div class="chat-input">
+      <input id="msg" placeholder="Сообщение">
+      <button onclick="send()">➤</button>
+
+      <input type="file" id="file" hidden>
+      <button onclick="file.click()">📎</button>
+    </div>
+  </main>
+
 </div>
 
 <script src="/script.js"></script>
