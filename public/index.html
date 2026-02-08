@@ -18,16 +18,28 @@
 
 <div class="app">
 
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="server">
       <img src="/logo.svg" width="36">
     </div>
   </aside>
 
-  <main class="chat-area">
+  <!-- CHANNELS -->
+  <aside class="channels">
+    <div class="channels-title">ТЕКСТ</div>
+    <div id="textChannels"></div>
 
+    <div class="channels-title">ГОЛОС</div>
+    <div id="voiceChannels"></div>
+
+    <button class="add-channel" onclick="createChannel()">＋ канал</button>
+  </aside>
+
+  <!-- CHAT -->
+  <main class="chat-area">
     <header class="chat-header">
-      FASTMOST
+      <span id="channelName"># общий</span>
       <span id="online" class="online">🟢 Онлайн: 1</span>
     </header>
 
@@ -36,15 +48,10 @@
     <div class="chat-input">
       <input id="msg" placeholder="Сообщение">
       <button onclick="send()">➤</button>
-
-      <input type="file" id="file" hidden>
-      <button onclick="file.click()">📎</button>
     </div>
-
   </main>
-</div>
 
-<button class="voice-btn" onclick="startVoice()">🎙️</button>
+</div>
 
 <script src="/script.js"></script>
 <script src="/voice.js"></script>
