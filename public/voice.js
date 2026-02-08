@@ -1,21 +1,30 @@
-const voicePeers = {};
 let localStream = null;
 let currentVoice = null;
+const peers = {};
+let muted = false;
+let deafened = false;
 
-const wsVoiceSend = data => {
+/* ===== HELPERS ===== */
+function wsSend(data) {
   if (ws.readyState === 1) ws.send(JSON.stringify(data));
-};
+}
 
 /* ===== JOIN VOICE ===== */
 async function joinVoice(channel) {
   if (currentVoice === channel) return;
-  leaveVoice();
 
+  leaveVoice();
   currentVoice = channel;
 
-  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  localStream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true
+    }
+  });
 
-  wsVoiceSend({
+  wsSend({
     type: "voice-join",
     channel
   });
@@ -25,31 +34,29 @@ async function joinVoice(channel) {
 function leaveVoice() {
   if (!currentVoice) return;
 
-  wsVoiceSend({
-    type: "voice-leave"
-  });
+  wsSend({ type: "voice-leave" });
 
-  Object.values(voicePeers).forEach(pc => pc.close());
-  Object.keys(voicePeers).forEach(k => delete voicePeers[k]);
+  Object.values(peers).forEach(p => p.close());
+  Object.keys(peers).forEach(k => delete peers[k]);
 
   localStream?.getTracks().forEach(t => t.stop());
   localStream = null;
   currentVoice = null;
 }
 
-/* ===== CREATE PEER ===== */
+/* ===== PEER ===== */
 function createPeer(id) {
   const pc = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
-  voicePeers[id] = pc;
+  peers[id] = pc;
 
   localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 
   pc.onicecandidate = e => {
     if (e.candidate) {
-      wsVoiceSend({
+      wsSend({
         type: "voice-ice",
         to: id,
         candidate: e.candidate
@@ -65,6 +72,7 @@ function createPeer(id) {
       audio.autoplay = true;
       document.body.appendChild(audio);
     }
+    audio.muted = deafened;
     audio.srcObject = e.streams[0];
   };
 
@@ -80,7 +88,7 @@ ws.addEventListener("message", async e => {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    wsVoiceSend({
+    wsSend({
       type: "voice-offer",
       to: d.userId,
       offer
@@ -90,10 +98,11 @@ ws.addEventListener("message", async e => {
   if (d.type === "voice-offer") {
     const pc = createPeer(d.from);
     await pc.setRemoteDescription(d.offer);
+
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
-    wsVoiceSend({
+    wsSend({
       type: "voice-answer",
       to: d.from,
       answer
@@ -101,10 +110,24 @@ ws.addEventListener("message", async e => {
   }
 
   if (d.type === "voice-answer") {
-    await voicePeers[d.from]?.setRemoteDescription(d.answer);
+    await peers[d.from]?.setRemoteDescription(d.answer);
   }
 
   if (d.type === "voice-ice") {
-    await voicePeers[d.from]?.addIceCandidate(d.candidate);
+    await peers[d.from]?.addIceCandidate(d.candidate);
   }
+});
+
+/* ===== MUTE ===== */
+document.getElementById("muteBtn")?.addEventListener("click", () => {
+  muted = !muted;
+  localStream?.getAudioTracks().forEach(t => t.enabled = !muted);
+  document.getElementById("muteBtn").textContent = muted ? "🔇" : "🎤";
+});
+
+/* ===== DEAFEN ===== */
+document.getElementById("deafenBtn")?.addEventListener("click", () => {
+  deafened = !deafened;
+  document.querySelectorAll("audio").forEach(a => a.muted = deafened);
+  document.getElementById("deafenBtn").textContent = deafened ? "🚫🎧" : "🎧";
 });
