@@ -2,7 +2,10 @@ const ws = new WebSocket(
   (location.protocol === "https:" ? "wss://" : "ws://") + location.host
 );
 
-/* ===== ELEMENTS ===== */
+/* ================== CONFIG ================== */
+const GIPHY_KEY = "sdMbKKOlbQ19nMxNRPXFccE1IxYAmXfy";
+
+/* ================== ELEMENTS ================== */
 const messages = document.getElementById("messages");
 const msg = document.getElementById("msg");
 const online = document.getElementById("online");
@@ -14,17 +17,16 @@ const textChannelsBox = document.getElementById("textChannels");
 const emojiPicker = document.getElementById("emojiPicker");
 const gifPicker = document.getElementById("gifPicker");
 
-/* ===== USER ===== */
+/* ================== USER ================== */
 const username = localStorage.getItem("username") || "Guest";
 const avatar = localStorage.getItem("avatar") || "/logo.svg";
 
-/* ===== STATE ===== */
+/* ================== STATE ================== */
 let currentChannel = "общий";
 
-/* ===== WS OPEN ===== */
+/* ================== WS ================== */
 ws.onopen = () => joinChannel(currentChannel);
 
-/* ===== WS MESSAGE ===== */
 ws.onmessage = e => {
   const data = JSON.parse(e.data);
 
@@ -58,14 +60,16 @@ ws.onmessage = e => {
   if (data.type === "history") {
     messages.innerHTML = "";
     data.messages.forEach(renderMessage);
+    messages.scrollTop = messages.scrollHeight;
   }
 
   if (data.type === "message" && data.channel === currentChannel) {
     renderMessage(data);
+    messages.scrollTop = messages.scrollHeight;
   }
 };
 
-/* ===== CHAT ===== */
+/* ================== CHAT ================== */
 function renderMessage(m) {
   const d = document.createElement("div");
   d.className = "message";
@@ -75,7 +79,6 @@ function renderMessage(m) {
     <div class="text">${m.text}</div>
   `;
   messages.appendChild(d);
-  messages.scrollTop = messages.scrollHeight;
 }
 
 function send() {
@@ -87,13 +90,13 @@ function send() {
     user: username,
     avatar,
     text: msg.value,
-    time: new Date().toLocaleTimeString().slice(0,5)
+    time: new Date().toLocaleTimeString().slice(0, 5)
   }));
 
   msg.value = "";
 }
 
-/* ===== CHANNELS ===== */
+/* ================== CHANNELS ================== */
 function joinChannel(name) {
   currentChannel = name;
   channelName.textContent = "# " + name;
@@ -128,37 +131,41 @@ function createTextChannel() {
   textChannelsBox.appendChild(div);
 }
 
-/* ===== EMOJI ===== */
-const emojis = "😀 😁 😂 🤣 😊 😎 😍 😘 🤔 😴 😡 👍 👎 👏 🙌 🔥 💯 ❤️".split(" ");
+/* ================== EMOJI ================== */
+const emojis = "😀 😁 😂 🤣 😊 😎 😍 😘 🤔 😴 😡 👍 👎 👏 🙌 🔥 💯 ❤️ 🎉 👀 💀".split(" ");
+
 emojiPicker.innerHTML = emojis.map(e =>
-  `<span onclick="msg.value+='${e}'">${e}</span>`
+  `<span onclick="addEmoji('${e}')">${e}</span>`
 ).join("");
+
+function addEmoji(e) {
+  msg.value += e;
+}
 
 function toggleEmoji() {
   emojiPicker.classList.toggle("hidden");
   gifPicker.classList.add("hidden");
 }
 
-/* ===== GIF (TENOR) ===== */
-const TENOR_KEY = "ВСТАВЬ_API_KEY";
-
+/* ================== GIF (GIPHY) ================== */
 async function toggleGif() {
   gifPicker.classList.toggle("hidden");
   emojiPicker.classList.add("hidden");
-  loadGifs();
+  loadGifs("funny");
 }
 
-async function loadGifs() {
-  gifPicker.innerHTML = "Загрузка...";
+async function loadGifs(query) {
+  gifPicker.innerHTML = "Загрузка GIF...";
+
   const r = await fetch(
-    `https://tenor.googleapis.com/v2/search?q=funny&key=${TENOR_KEY}&limit=10`
+    `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(query)}&limit=15`
   );
   const d = await r.json();
 
   gifPicker.innerHTML = "";
-  d.results.forEach(g => {
+  d.data.forEach(g => {
     const img = document.createElement("img");
-    img.src = g.media_formats.gif.url;
+    img.src = g.images.fixed_width.url;
     img.onclick = () => {
       msg.value = `<img src="${img.src}" class="gif">`;
       send();
