@@ -20,16 +20,21 @@ const avatar = localStorage.getItem("avatar") || "/logo.svg";
 let currentChannel = "общий";
 
 /* ===== WS OPEN ===== */
-ws.onopen = () => joinChannel(currentChannel);
+ws.onopen = () => {
+  joinChannel(currentChannel);
+};
 
 /* ===== WS MESSAGE ===== */
 ws.onmessage = e => {
   const data = JSON.parse(e.data);
 
+  /* ONLINE COUNT */
   if (data.type === "online") {
     online.textContent = "🟢 Онлайн: " + data.count;
+    return;
   }
 
+  /* USERS LIST + VOICE OVERLAY */
   if (data.type === "users") {
     usersBox.innerHTML = "";
     voiceUsersBox.innerHTML = "";
@@ -37,12 +42,17 @@ ws.onmessage = e => {
     let anyoneInVoice = false;
 
     data.users.forEach(u => {
+      /* USERS PANEL */
       const userDiv = document.createElement("div");
       userDiv.className = "user-item" + (u.speaking ? " speaking" : "");
-      userDiv.innerHTML = `<img src="${u.avatar}"><span>${u.username}</span>`;
+      userDiv.innerHTML = `
+        <img src="${u.avatar}">
+        <span>${u.username}</span>
+      `;
       usersBox.appendChild(userDiv);
 
-      if (u.speaking !== undefined) {
+      /* VOICE OVERLAY */
+      if (typeof u.speaking === "boolean") {
         anyoneInVoice = true;
         const v = document.createElement("div");
         v.className = "voice-user" + (u.speaking ? " speaking" : "");
@@ -56,23 +66,31 @@ ws.onmessage = e => {
     });
 
     voiceOverlay.classList.toggle("hidden", !anyoneInVoice);
+    return;
   }
 
+  /* VOICE ACTIVITY */
   if (data.type === "voice-activity") {
     document.querySelectorAll(".user-item").forEach(el => {
       if (el.textContent.includes(data.user)) {
         el.classList.toggle("speaking", data.speaking);
       }
     });
+    return;
   }
 
+  /* HISTORY */
   if (data.type === "history") {
     messages.innerHTML = "";
     data.messages.forEach(renderMessage);
+    messages.scrollTop = messages.scrollHeight;
+    return;
   }
 
+  /* MESSAGE */
   if (data.type === "message" && data.channel === currentChannel) {
     renderMessage(data);
+    messages.scrollTop = messages.scrollHeight;
   }
 };
 
@@ -86,12 +104,11 @@ function renderMessage(m) {
     <div class="text">${m.text}</div>
   `;
   messages.appendChild(d);
-  messages.scrollTop = messages.scrollHeight;
 }
 
 /* ===== SEND MESSAGE ===== */
 function send() {
-  if (!msg.value) return;
+  if (!msg.value.trim()) return;
 
   ws.send(JSON.stringify({
     type: "message",
@@ -99,7 +116,7 @@ function send() {
     user: username,
     avatar,
     text: msg.value,
-    time: new Date().toLocaleTimeString().slice(0,5)
+    time: new Date().toLocaleTimeString().slice(0, 5)
   }));
 
   msg.value = "";
