@@ -268,4 +268,9 @@ body {
   cursor: pointer;
   margin-bottom: 6px;
 }
+.message img.gif {
+  max-width: 300px;
+  border-radius: 8px;
+  margin-top: 6px;
+}
 
