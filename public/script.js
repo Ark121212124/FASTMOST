@@ -11,6 +11,8 @@ const channelName = document.getElementById("channelName");
 const voiceOverlay = document.getElementById("voiceOverlay");
 const voiceUsersBox = document.getElementById("voiceUsers");
 const textChannelsBox = document.getElementById("textChannels");
+const emojiPicker = document.getElementById("emojiPicker");
+const gifPicker = document.getElementById("gifPicker");
 
 /* ===== USER ===== */
 const username = localStorage.getItem("username") || "Guest";
@@ -20,81 +22,50 @@ const avatar = localStorage.getItem("avatar") || "/logo.svg";
 let currentChannel = "общий";
 
 /* ===== WS OPEN ===== */
-ws.onopen = () => {
-  joinChannel(currentChannel);
-};
+ws.onopen = () => joinChannel(currentChannel);
 
 /* ===== WS MESSAGE ===== */
 ws.onmessage = e => {
   const data = JSON.parse(e.data);
 
-  /* ONLINE COUNT */
   if (data.type === "online") {
     online.textContent = "🟢 Онлайн: " + data.count;
-    return;
   }
 
-  /* USERS LIST + VOICE OVERLAY */
   if (data.type === "users") {
     usersBox.innerHTML = "";
     voiceUsersBox.innerHTML = "";
-
-    let anyoneInVoice = false;
+    let inVoice = false;
 
     data.users.forEach(u => {
-      /* USERS PANEL */
-      const userDiv = document.createElement("div");
-      userDiv.className = "user-item" + (u.speaking ? " speaking" : "");
-      userDiv.innerHTML = `
-        <img src="${u.avatar}">
-        <span>${u.username}</span>
-      `;
-      usersBox.appendChild(userDiv);
+      const div = document.createElement("div");
+      div.className = "user-item" + (u.speaking ? " speaking" : "");
+      div.innerHTML = `<img src="${u.avatar}"><span>${u.username}</span>`;
+      usersBox.appendChild(div);
 
-      /* VOICE OVERLAY */
       if (typeof u.speaking === "boolean") {
-        anyoneInVoice = true;
+        inVoice = true;
         const v = document.createElement("div");
         v.className = "voice-user" + (u.speaking ? " speaking" : "");
-        v.innerHTML = `
-          <img src="${u.avatar}">
-          <span>${u.username}</span>
-          <span class="icons">${u.speaking ? "🔊" : "🎧"}</span>
-        `;
+        v.innerHTML = `<img src="${u.avatar}"><span>${u.username}</span>`;
         voiceUsersBox.appendChild(v);
       }
     });
 
-    voiceOverlay.classList.toggle("hidden", !anyoneInVoice);
-    return;
+    voiceOverlay.classList.toggle("hidden", !inVoice);
   }
 
-  /* VOICE ACTIVITY */
-  if (data.type === "voice-activity") {
-    document.querySelectorAll(".user-item").forEach(el => {
-      if (el.textContent.includes(data.user)) {
-        el.classList.toggle("speaking", data.speaking);
-      }
-    });
-    return;
-  }
-
-  /* HISTORY */
   if (data.type === "history") {
     messages.innerHTML = "";
     data.messages.forEach(renderMessage);
-    messages.scrollTop = messages.scrollHeight;
-    return;
   }
 
-  /* MESSAGE */
   if (data.type === "message" && data.channel === currentChannel) {
     renderMessage(data);
-    messages.scrollTop = messages.scrollHeight;
   }
 };
 
-/* ===== HELPERS ===== */
+/* ===== CHAT ===== */
 function renderMessage(m) {
   const d = document.createElement("div");
   d.className = "message";
@@ -104,9 +75,9 @@ function renderMessage(m) {
     <div class="text">${m.text}</div>
   `;
   messages.appendChild(d);
+  messages.scrollTop = messages.scrollHeight;
 }
 
-/* ===== SEND MESSAGE ===== */
 function send() {
   if (!msg.value.trim()) return;
 
@@ -116,13 +87,13 @@ function send() {
     user: username,
     avatar,
     text: msg.value,
-    time: new Date().toLocaleTimeString().slice(0, 5)
+    time: new Date().toLocaleTimeString().slice(0,5)
   }));
 
   msg.value = "";
 }
 
-/* ===== JOIN CHANNEL ===== */
+/* ===== CHANNELS ===== */
 function joinChannel(name) {
   currentChannel = name;
   channelName.textContent = "# " + name;
@@ -144,7 +115,6 @@ function joinChannel(name) {
   }));
 }
 
-/* ===== TEXT CHANNELS ===== */
 function createTextChannel() {
   const name = prompt("Название канала");
   if (!name) return;
@@ -158,16 +128,42 @@ function createTextChannel() {
   textChannelsBox.appendChild(div);
 }
 
-/* ===== VOICE CHANNELS ===== */
-function createVoiceChannel() {
-  const name = prompt("Название voice-канала");
-  if (!name) return;
+/* ===== EMOJI ===== */
+const emojis = "😀 😁 😂 🤣 😊 😎 😍 😘 🤔 😴 😡 👍 👎 👏 🙌 🔥 💯 ❤️".split(" ");
+emojiPicker.innerHTML = emojis.map(e =>
+  `<span onclick="msg.value+='${e}'">${e}</span>`
+).join("");
 
-  const div = document.createElement("div");
-  div.className = "channel voice";
-  div.dataset.name = name;
-  div.textContent = "🔊 " + name;
-  div.onclick = () => joinVoice(name);
+function toggleEmoji() {
+  emojiPicker.classList.toggle("hidden");
+  gifPicker.classList.add("hidden");
+}
 
-  document.getElementById("voiceChannels").appendChild(div);
+/* ===== GIF (TENOR) ===== */
+const TENOR_KEY = "ВСТАВЬ_API_KEY";
+
+async function toggleGif() {
+  gifPicker.classList.toggle("hidden");
+  emojiPicker.classList.add("hidden");
+  loadGifs();
+}
+
+async function loadGifs() {
+  gifPicker.innerHTML = "Загрузка...";
+  const r = await fetch(
+    `https://tenor.googleapis.com/v2/search?q=funny&key=${TENOR_KEY}&limit=10`
+  );
+  const d = await r.json();
+
+  gifPicker.innerHTML = "";
+  d.results.forEach(g => {
+    const img = document.createElement("img");
+    img.src = g.media_formats.gif.url;
+    img.onclick = () => {
+      msg.value = `<img src="${img.src}" class="gif">`;
+      send();
+      gifPicker.classList.add("hidden");
+    };
+    gifPicker.appendChild(img);
+  });
 }
