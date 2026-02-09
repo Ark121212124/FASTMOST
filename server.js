@@ -19,7 +19,7 @@ if (!fs.existsSync(CHANNELS)) fs.mkdirSync(CHANNELS);
 
 /* ===== HELPERS ===== */
 const hash = p => crypto.createHash("sha256").update(p).digest("hex");
-const token = () => crypto.randomBytes(24).toString("hex");
+const makeToken = () => crypto.randomBytes(24).toString("hex");
 
 /* ===== UPLOAD ===== */
 const upload = multer({ dest: AVATARS });
@@ -44,7 +44,6 @@ const server = http.createServer((req, res) => {
 
       const users = JSON.parse(fs.readFileSync(USERS_FILE));
 
-      /* REGISTER */
       if (req.url === "/register") {
         if (users.find(u => u.username === username)) {
           res.writeHead(409); return res.end("User exists");
@@ -54,7 +53,7 @@ const server = http.createServer((req, res) => {
           username,
           password: hash(password),
           avatar: "/logo.svg",
-          token: token()
+          token: makeToken()
         };
 
         users.push(user);
@@ -64,7 +63,6 @@ const server = http.createServer((req, res) => {
         return res.end(JSON.stringify(user));
       }
 
-      /* LOGIN */
       const user = users.find(
         u => u.username === username && u.password === hash(password)
       );
@@ -73,7 +71,7 @@ const server = http.createServer((req, res) => {
         res.writeHead(401); return res.end("Invalid credentials");
       }
 
-      user.token = token();
+      user.token = makeToken();
       fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -117,8 +115,7 @@ const server = http.createServer((req, res) => {
       ".js": "application/javascript",
       ".svg": "image/svg+xml",
       ".png": "image/png",
-      ".jpg": "image/jpeg",
-      ".json": "application/json"
+      ".jpg": "image/jpeg"
     };
 
     res.writeHead(200, {
@@ -132,15 +129,16 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocket.Server({ server });
 const clients = new Set();
 
-const broadcast = data => {
-  const m = JSON.stringify(data);
-  clients.forEach(c => c.readyState === 1 && c.send(m));
-};
+function broadcast(data) {
+  const msg = JSON.stringify(data);
+  clients.forEach(c => c.readyState === 1 && c.send(msg));
+}
 
 wss.on("connection", ws => {
   ws.username = "Guest";
   ws.avatar = "/logo.svg";
   ws.channel = "общий";
+  ws.speaking = false;
 
   clients.add(ws);
   broadcast({ type: "online", count: clients.size });
@@ -166,7 +164,11 @@ wss.on("connection", ws => {
         type: "users",
         users: [...clients]
           .filter(c => c.channel === ws.channel)
-          .map(c => ({ username: c.username, avatar: c.avatar }))
+          .map(c => ({
+            username: c.username,
+            avatar: c.avatar,
+            speaking: c.speaking
+          }))
       });
     }
 
@@ -176,6 +178,15 @@ wss.on("connection", ws => {
       msgs.push(d);
       fs.writeFileSync(f, JSON.stringify(msgs, null, 2));
       broadcast(d);
+    }
+
+    if (d.type === "voice-activity") {
+      ws.speaking = d.speaking;
+      broadcast({
+        type: "voice-activity",
+        user: ws.username,
+        speaking: d.speaking
+      });
     }
   });
 
