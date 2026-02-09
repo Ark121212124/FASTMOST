@@ -74,6 +74,8 @@
     <div id="messages" class="messages"></div>
 
     <div class="chat-input">
+      <button class="icon-btn" onclick="toggleEmoji()">😀</button>
+      <button class="icon-btn" onclick="toggleGif()">GIF</button>
       <input id="msg" placeholder="Сообщение..." autocomplete="off">
       <button onclick="send()">➤</button>
     </div>
@@ -87,6 +89,10 @@
   </aside>
 
 </div>
+
+<!-- EMOJI / GIF -->
+<div id="emojiPicker" class="emoji-picker hidden"></div>
+<div id="gifPicker" class="gif-picker hidden"></div>
 
 <!-- VOICE OVERLAY -->
 <div id="voiceOverlay" class="voice-overlay hidden">
