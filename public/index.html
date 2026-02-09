@@ -18,14 +18,14 @@
 
 <div class="app">
 
-  <!-- SERVERS -->
+  <!-- ===== SERVERS ===== -->
   <aside class="sidebar">
     <div class="server">
       <img src="/logo.svg" width="36">
     </div>
   </aside>
 
-  <!-- CHANNELS -->
+  <!-- ===== CHANNELS ===== -->
   <aside class="channels">
 
     <div class="channels-title">ТЕКСТ</div>
@@ -44,7 +44,7 @@
     </div>
     <button class="add-channel" onclick="createVoiceChannel()">＋ voice</button>
 
-    <!-- USER PANEL -->
+    <!-- ===== USER PANEL ===== -->
     <div class="user-panel">
       <div class="user-info">
         <img id="profileAvatar" src="/logo.svg">
@@ -55,15 +55,15 @@
       </div>
 
       <div class="user-actions">
-        <button id="muteBtn">🎤</button>
-        <button id="deafenBtn">🎧</button>
-        <button onclick="logout()">⎋</button>
+        <button id="muteBtn" title="Mute">🎤</button>
+        <button id="deafenBtn" title="Deafen">🎧</button>
+        <button title="Выход" onclick="logout()">⎋</button>
       </div>
     </div>
 
   </aside>
 
-  <!-- CHAT -->
+  <!-- ===== CHAT ===== -->
   <main class="chat-area">
 
     <header class="chat-header">
@@ -82,7 +82,7 @@
 
   </main>
 
-  <!-- USERS -->
+  <!-- ===== USERS ===== -->
   <aside class="users">
     <div class="users-title">Онлайн</div>
     <div id="users"></div>
@@ -90,16 +90,17 @@
 
 </div>
 
-<!-- EMOJI / GIF -->
+<!-- ===== EMOJI / GIF PICKERS ===== -->
 <div id="emojiPicker" class="emoji-picker hidden"></div>
 <div id="gifPicker" class="gif-picker hidden"></div>
 
-<!-- VOICE OVERLAY -->
+<!-- ===== VOICE OVERLAY ===== -->
 <div id="voiceOverlay" class="voice-overlay hidden">
   <div class="voice-title">🎙️ В голосе</div>
   <div id="voiceUsers"></div>
 </div>
 
+<!-- ===== SCRIPTS ===== -->
 <script src="/script.js"></script>
 <script src="/voice.js"></script>
 
