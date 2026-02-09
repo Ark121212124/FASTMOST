@@ -8,6 +8,7 @@ const crypto = require("crypto");
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, "public");
 
+/* ===== HTTP ===== */
 const server = http.createServer((req, res) => {
   const safe = req.url === "/" ? "/index.html" : req.url;
   const filePath = path.join(PUBLIC, safe);
@@ -39,94 +40,54 @@ const server = http.createServer((req, res) => {
 
 /* ===== WEBSOCKET ===== */
 const wss = new WebSocket.Server({ server });
-const clients = new Map(); // id -> ws
+const clients = new Set();
 
-function send(ws, data) {
-  if (ws.readyState === 1) ws.send(JSON.stringify(data));
-}
-
-function broadcast(data, exceptId = null) {
-  for (const [id, ws] of clients) {
-    if (id !== exceptId) send(ws, data);
-  }
+function broadcast(data) {
+  const msg = JSON.stringify(data);
+  clients.forEach(ws => {
+    if (ws.readyState === 1) ws.send(msg);
+  });
 }
 
 wss.on("connection", ws => {
-  ws.id = crypto.randomUUID();
   ws.username = "Guest";
-  ws.voice = null;
+  ws.avatar = "/logo.svg";
+  ws.channel = "общий";
 
-  clients.set(ws.id, ws);
+  clients.add(ws);
+  broadcast({ type: "online", count: clients.size });
 
   ws.on("message", raw => {
     let d;
     try { d = JSON.parse(raw); } catch { return; }
 
-    /* ===== JOIN ===== */
     if (d.type === "join") {
       ws.username = d.user;
-      return;
-    }
+      ws.avatar = d.avatar;
+      ws.channel = d.channel;
 
-    /* ===== VOICE JOIN ===== */
-    if (d.type === "voice-join") {
-      ws.voice = d.channel;
-
-      // сообщаем остальным
       broadcast({
-        type: "voice-user-joined",
-        userId: ws.id,
-        username: ws.username
-      }, ws.id);
-
-      // отправляем список уже сидящих
-      const users = [];
-      for (const [id, c] of clients) {
-        if (c.voice === ws.voice && id !== ws.id) {
-          users.push({ id, username: c.username });
-        }
-      }
-
-      send(ws, {
-        type: "voice-users",
-        users
+        type: "users",
+        users: [...clients]
+          .filter(c => c.channel === ws.channel)
+          .map(c => ({
+            username: c.username,
+            avatar: c.avatar
+          }))
       });
     }
 
-    /* ===== VOICE LEAVE ===== */
-    if (d.type === "voice-leave") {
-      ws.voice = null;
-      broadcast({
-        type: "voice-user-left",
-        userId: ws.id
-      }, ws.id);
-    }
-
-    /* ===== WEBRTC SIGNAL ===== */
-    if (
-      d.type === "voice-offer" ||
-      d.type === "voice-answer" ||
-      d.type === "voice-ice"
-    ) {
-      const to = clients.get(d.to);
-      if (to) {
-        send(to, {
-          ...d,
-          from: ws.id
-        });
-      }
+    if (d.type === "message") {
+      broadcast(d);
     }
   });
 
   ws.on("close", () => {
-    clients.delete(ws.id);
-    broadcast({
-      type: "voice-user-left",
-      userId: ws.id
-    });
+    clients.delete(ws);
+    broadcast({ type: "online", count: clients.size });
   });
 });
 
 server.listen(process.env.PORT || 10000, () =>
-  console.log("🚀 FASTMOST WebRTC ready")
+  console.log("🚀 FASTMOST server running")
 );
