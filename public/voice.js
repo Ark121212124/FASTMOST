@@ -2,16 +2,21 @@ let localStream = null;
 let currentVoice = null;
 const peers = {};
 
+/* ===== CONFIG ===== */
+const RTC_CONFIG = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+};
+
 /* ===== HELPERS ===== */
 function wsSend(data) {
-  ws.readyState === 1 && ws.send(JSON.stringify(data));
+  if (ws.readyState === 1) ws.send(JSON.stringify(data));
 }
 
 /* ===== JOIN VOICE ===== */
 async function joinVoice(channel) {
   if (currentVoice === channel) return;
-  leaveVoice();
 
+  leaveVoice();
   currentVoice = channel;
 
   localStream = await navigator.mediaDevices.getUserMedia({
@@ -25,30 +30,29 @@ async function joinVoice(channel) {
   wsSend({ type: "voice-join", channel });
 }
 
-/* ===== LEAVE ===== */
+/* ===== LEAVE VOICE ===== */
 function leaveVoice() {
   if (!currentVoice) return;
 
   wsSend({ type: "voice-leave" });
 
   Object.values(peers).forEach(pc => pc.close());
-  Object.keys(peers).forEach(k => delete peers[k]);
+  Object.keys(peers).forEach(id => delete peers[id]);
 
   localStream?.getTracks().forEach(t => t.stop());
   localStream = null;
   currentVoice = null;
 }
 
-/* ===== PEER ===== */
+/* ===== CREATE PEER ===== */
 function createPeer(id) {
-  const pc = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-  });
+  if (peers[id]) return peers[id];
 
+  const pc = new RTCPeerConnection(RTC_CONFIG);
   peers[id] = pc;
 
-  localStream.getTracks().forEach(t =>
-    pc.addTrack(t, localStream)
+  localStream.getTracks().forEach(track =>
+    pc.addTrack(track, localStream)
   );
 
   pc.onicecandidate = e => {
