@@ -209,3 +209,63 @@ body {
   align-items: center;
   gap: 6px;
 }
+.icon-btn {
+  background: #1f1f2a;
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: #5865f2;
+}
+
+/* ===== EMOJI ===== */
+.emoji-picker {
+  position: absolute;
+  bottom: 70px;
+  left: 350px;
+  background: #15151c;
+  padding: 10px;
+  border-radius: 8px;
+  width: 260px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.emoji-picker span {
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ===== GIF ===== */
+.gif-picker {
+  position: absolute;
+  bottom: 70px;
+  left: 350px;
+  background: #15151c;
+  padding: 10px;
+  border-radius: 8px;
+  width: 320px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.gif-picker img {
+  width: 100%;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
