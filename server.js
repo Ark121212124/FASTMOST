@@ -26,48 +26,94 @@ const upload = multer({ dest: AVATARS });
 
 /* ===== HTTP SERVER ===== */
 const server = http.createServer((req, res) => {
+
+  /* ===== AUTH ===== */
   if (req.method === "POST" && (req.url === "/login" || req.url === "/register")) {
     let body = "";
     req.on("data", c => body += c);
     req.on("end", () => {
-      const { username, password } = JSON.parse(body || "{}");
+      let data;
+      try { data = JSON.parse(body); } catch {
+        res.writeHead(400); return res.end("Bad JSON");
+      }
+
+      const { username, password } = data;
+      if (!username || !password) {
+        res.writeHead(400); return res.end("Missing fields");
+      }
+
       const users = JSON.parse(fs.readFileSync(USERS_FILE));
 
       if (req.url === "/register") {
         if (users.find(u => u.username === username)) {
-          res.writeHead(409); return res.end();
+          res.writeHead(409); return res.end("User exists");
         }
-        const user = { username, password: hash(password), avatar: "/logo.svg", token: makeToken() };
+
+        const user = {
+          username,
+          password: hash(password),
+          avatar: "/logo.svg",
+          token: makeToken()
+        };
+
         users.push(user);
         fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-        res.end(JSON.stringify(user));
-        return;
+        res.writeHead(200, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify(user));
       }
 
-      const user = users.find(u => u.username === username && u.password === hash(password));
-      if (!user) { res.writeHead(401); return res.end(); }
+      const user = users.find(
+        u => u.username === username && u.password === hash(password)
+      );
+
+      if (!user) {
+        res.writeHead(401); return res.end("Invalid credentials");
+      }
 
       user.token = makeToken();
       fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+      res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(user));
     });
     return;
   }
 
+  /* ===== AVATAR UPLOAD ===== */
   if (req.method === "POST" && req.url === "/upload-avatar") {
     upload.single("avatar")(req, res, () => {
+      res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ url: "/avatars/" + req.file.filename }));
     });
     return;
   }
 
+  /* ===== STATIC FILES ===== */
   const safe = req.url === "/" ? "/index.html" : req.url;
-  const filePath = safe.startsWith("/avatars/")
-    ? path.join(AVATARS, path.basename(safe))
-    : path.join(PUBLIC, safe.slice(1));
 
+  if (safe.startsWith("/avatars/")) {
+    const p = path.join(AVATARS, path.basename(safe));
+    return fs.readFile(p, (e, d) => {
+      if (e) { res.writeHead(404); return res.end(); }
+      res.end(d);
+    });
+  }
+
+  const filePath = path.join(PUBLIC, safe.slice(1));
   fs.readFile(filePath, (e, d) => {
     if (e) { res.writeHead(404); return res.end(); }
+
+    const types = {
+      ".html": "text/html; charset=utf-8",
+      ".css": "text/css; charset=utf-8",
+      ".js": "application/javascript; charset=utf-8",
+      ".svg": "image/svg+xml",
+      ".png": "image/png",
+      ".jpg": "image/jpeg"
+    };
+
+    res.writeHead(200, {
+      "Content-Type": types[path.extname(filePath)] || "application/octet-stream"
+    });
     res.end(d);
   });
 });
@@ -75,21 +121,6 @@ const server = http.createServer((req, res) => {
 /* ===== WEBSOCKET ===== */
 const wss = new WebSocket.Server({ server });
 const clients = new Set();
-
-function voiceState() {
-  const map = {};
-  [...clients].forEach(c => {
-    if (c.voice) {
-      if (!map[c.voice]) map[c.voice] = [];
-      map[c.voice].push({
-        username: c.username,
-        avatar: c.avatar,
-        speaking: c.speaking
-      });
-    }
-  });
-  return map;
-}
 
 function broadcast(data) {
   const msg = JSON.stringify(data);
@@ -107,41 +138,71 @@ wss.on("connection", ws => {
   broadcast({ type: "online", count: clients.size });
 
   ws.on("message", raw => {
-    const d = JSON.parse(raw);
+    let d;
+    try { d = JSON.parse(raw); } catch { return; }
 
     if (d.type === "join") {
       ws.username = d.user;
       ws.avatar = d.avatar;
       ws.channel = d.channel;
-      broadcast({ type: "users", users: [...clients].map(c => ({
-        username: c.username,
-        avatar: c.avatar,
-        speaking: c.speaking
-      }))});
+
+      const f = path.join(CHANNELS, ws.channel + ".json");
+      if (!fs.existsSync(f)) fs.writeFileSync(f, "[]");
+
+      ws.send(JSON.stringify({
+        type: "history",
+        messages: JSON.parse(fs.readFileSync(f))
+      }));
+
+      broadcastUsers();
     }
 
-    if (d.type === "message") broadcast(d);
+    if (d.type === "message") {
+      const f = path.join(CHANNELS, ws.channel + ".json");
+      const msgs = JSON.parse(fs.readFileSync(f));
+      msgs.push(d);
+      fs.writeFileSync(f, JSON.stringify(msgs, null, 2));
+      broadcast(d);
+    }
 
     if (d.type === "voice-join") {
       ws.voice = d.channel;
-      broadcast({ type: "voice-state", voices: voiceState() });
+      broadcastUsers();
     }
 
     if (d.type === "voice-leave") {
       ws.voice = null;
-      broadcast({ type: "voice-state", voices: voiceState() });
+      ws.speaking = false;
+      broadcastUsers();
     }
 
     if (d.type === "voice-activity") {
       ws.speaking = d.speaking;
-      broadcast({ type: "voice-state", voices: voiceState() });
+      broadcastUsers();
     }
   });
 
   ws.on("close", () => {
     clients.delete(ws);
-    broadcast({ type: "voice-state", voices: voiceState() });
+    broadcastUsers();
+    broadcast({ type: "online", count: clients.size });
   });
 });
 
-server.listen(process.env.PORT || 10000);
+function broadcastUsers() {
+  broadcast({
+    type: "users",
+    users: [...clients].map(c => ({
+      username: c.username,
+      avatar: c.avatar,
+      channel: c.channel,
+      voice: c.voice,
+      speaking: c.speaking
+    }))
+  });
+}
+
+/* ===== START ===== */
+server.listen(process.env.PORT || 10000, () =>
+  console.log("🚀 FASTMOST running")
+);
