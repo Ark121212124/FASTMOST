@@ -1,5 +1,6 @@
-let localStream;
+let localStream = null;
 let currentVoice = null;
+let myId = null;
 
 const peers = {};
 
@@ -10,6 +11,8 @@ const RTC_CONFIG = {
 };
 
 
+/* ================= WS ================= */
+
 const ws = new WebSocket(
  location.protocol === "https:"
  ? "wss://" + location.host
@@ -19,115 +22,158 @@ const ws = new WebSocket(
 
 function wsSend(data){
 
- if(ws.readyState===1)
+ if(ws.readyState === 1)
  ws.send(JSON.stringify(data));
 
 }
 
 
-/* JOIN VOICE */
+/* ================= JOIN ================= */
+
 async function joinVoice(channel){
 
- if(currentVoice===channel) return;
+ if(currentVoice === channel) return;
 
  leaveVoice();
 
- currentVoice=channel;
+ currentVoice = channel;
 
- document.getElementById("voiceOverlay")
+ document
+ .getElementById("voiceOverlay")
  .classList.remove("hidden");
 
- document.getElementById("voiceChannelName")
- .textContent=channel;
+ document
+ .getElementById("voiceChannelName")
+ .textContent = channel;
 
 
- localStream=
- await navigator.mediaDevices.getUserMedia({
-  audio:true
- });
+ try{
+
+  localStream =
+  await navigator.mediaDevices.getUserMedia({
+   audio:{
+    echoCancellation:true,
+    noiseSuppression:true,
+    autoGainControl:true
+   }
+  });
+
+ }catch(e){
+
+  alert("Нет доступа к микрофону");
+
+  return;
+
+ }
 
 
  wsSend({
+
   type:"voice-join",
+
   channel,
-  user:localStorage.getItem("username")
+
+  user:localStorage.getItem("username") || "Guest"
+
  });
 
 }
 
 
-/* LEAVE */
+/* ================= LEAVE ================= */
+
 function leaveVoice(){
 
  if(!currentVoice) return;
 
  wsSend({type:"voice-leave"});
 
- Object.values(peers).forEach(pc=>pc.close());
+
+ Object.values(peers)
+ .forEach(pc=>pc.close());
 
  for(const id in peers)
  delete peers[id];
 
- localStream?.getTracks().forEach(t=>t.stop());
 
- document.getElementById("voiceOverlay")
+ localStream
+ ?.getTracks()
+ .forEach(track=>track.stop());
+
+
+ document
+ .getElementById("voiceOverlay")
  .classList.add("hidden");
 
- document.getElementById("voiceUsers").innerHTML="";
 
- currentVoice=null;
+ document
+ .getElementById("voiceUsers")
+ .innerHTML = "";
+
+
+ currentVoice = null;
 
 }
 
 
-/* CREATE PEER */
+/* ================= PEER ================= */
+
 function createPeer(id){
+
+ if(id === myId) return;
 
  if(peers[id]) return peers[id];
 
- const pc=
+
+ const pc =
  new RTCPeerConnection(RTC_CONFIG);
 
- peers[id]=pc;
+
+ peers[id] = pc;
 
 
- localStream.getTracks().forEach(track=>{
+ localStream.getTracks()
+ .forEach(track=>{
 
-  pc.addTrack(track,localStream);
+  pc.addTrack(track, localStream);
 
  });
 
 
- pc.ontrack=e=>{
+ pc.ontrack = e => {
 
-  let audio=
+  let audio =
   document.getElementById("audio-"+id);
+
 
   if(!audio){
 
-   audio=document.createElement("audio");
+   audio =
+   document.createElement("audio");
 
-   audio.id="audio-"+id;
+   audio.id = "audio-"+id;
 
-   audio.autoplay=true;
+   audio.autoplay = true;
 
    document.body.appendChild(audio);
 
   }
 
-  audio.srcObject=e.streams[0];
+  audio.srcObject = e.streams[0];
 
  };
 
 
- pc.onicecandidate=e=>{
+ pc.onicecandidate = e => {
 
   if(e.candidate){
 
    wsSend({
 
     type:"voice-ice",
+
     to:id,
+
     candidate:e.candidate
 
    });
@@ -136,30 +182,49 @@ function createPeer(id){
 
  };
 
+
  return pc;
 
 }
 
 
-/* RENDER USERS */
+/* ================= UI ================= */
+
 function renderVoiceUsers(users){
 
- const container=
+ const container =
  document.getElementById("voiceUsers");
 
- container.innerHTML="";
+ container.innerHTML = "";
 
- users.forEach(u=>{
 
-  const div=
+ users.forEach(user=>{
+
+  const div =
   document.createElement("div");
 
-  div.className="voice-user";
+  div.className = "voice-user";
 
-  div.innerHTML=`
-  <img src="/logo.svg">
-  ${u.username}
-  `;
+
+  if(user.id === myId){
+
+   div.style.color = "#22c55e";
+
+   div.style.fontWeight = "bold";
+
+   div.innerHTML = `
+   <img src="/logo.svg">
+   ${user.username} (Вы)
+   `;
+
+  }else{
+
+   div.innerHTML = `
+   <img src="/logo.svg">
+   ${user.username}
+   `;
+
+  }
 
   container.appendChild(div);
 
@@ -168,29 +233,46 @@ function renderVoiceUsers(users){
 }
 
 
-/* SIGNALING */
-ws.onmessage=async e=>{
+/* ================= SIGNALING ================= */
 
- const d=JSON.parse(e.data);
+ws.onmessage = async e => {
+
+ const d = JSON.parse(e.data);
 
 
- if(d.type==="voice-users"){
+ /* INIT */
+ if(d.type === "init"){
+
+  myId = d.id;
+
+ }
+
+
+ /* USER LIST */
+ if(d.type === "voice-users"){
 
   renderVoiceUsers(d.users);
 
+
   for(const u of d.users){
 
-   const pc=createPeer(u.id);
+   if(u.id === myId) continue;
 
-   const offer=
+   const pc = createPeer(u.id);
+
+   const offer =
    await pc.createOffer();
 
    await pc.setLocalDescription(offer);
 
    wsSend({
+
     type:"voice-offer",
+
     to:u.id,
+
     offer
+
    });
 
   }
@@ -198,34 +280,38 @@ ws.onmessage=async e=>{
  }
 
 
- if(d.type==="voice-user-joined"){
+ /* OFFER */
+ if(d.type === "voice-offer"){
 
-  renderVoiceUsers(d.users);
+  const pc =
+  createPeer(d.from);
 
- }
+  await pc
+  .setRemoteDescription(d.offer);
 
 
- if(d.type==="voice-offer"){
-
-  const pc=createPeer(d.from);
-
-  await pc.setRemoteDescription(d.offer);
-
-  const answer=
+  const answer =
   await pc.createAnswer();
 
-  await pc.setLocalDescription(answer);
+  await pc
+  .setLocalDescription(answer);
+
 
   wsSend({
+
    type:"voice-answer",
+
    to:d.from,
+
    answer
+
   });
 
  }
 
 
- if(d.type==="voice-answer"){
+ /* ANSWER */
+ if(d.type === "voice-answer"){
 
   await peers[d.from]
   ?.setRemoteDescription(d.answer);
@@ -233,7 +319,8 @@ ws.onmessage=async e=>{
  }
 
 
- if(d.type==="voice-ice"){
+ /* ICE */
+ if(d.type === "voice-ice"){
 
   await peers[d.from]
   ?.addIceCandidate(d.candidate);
@@ -241,11 +328,14 @@ ws.onmessage=async e=>{
  }
 
 
- if(d.type==="voice-user-left"){
+ /* LEFT */
+ if(d.type === "voice-user-left"){
 
-  peers[d.userId]?.close();
+  peers[d.userId]
+  ?.close();
 
   delete peers[d.userId];
+
 
   document
   .getElementById("audio-"+d.userId)
