@@ -1,118 +1,207 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FASTMOST</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="/styles.css">
-  <link rel="icon" href="/logo.svg">
+<title>FASTMOST</title>
 
-  <script>
-    if (!localStorage.getItem("token")) {
-      location.href = "/auth.html";
-    }
-  </script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="/logo.svg">
+
+<script>
+if (!localStorage.getItem("token")) {
+ location.href = "/auth.html";
+}
+</script>
+
 </head>
 <body>
 
 <div class="app">
 
-  <!-- ===== SERVERS ===== -->
-  <aside class="sidebar">
-    <div class="server">
-      <img src="/logo.svg" width="36">
-    </div>
-  </aside>
+<!-- SERVERS -->
+<aside class="sidebar">
 
-  <!-- ===== CHANNELS ===== -->
-  <aside class="channels">
+<div class="server active">
+<img src="/logo.svg">
+</div>
 
-    <div class="channels-title">ТЕКСТ</div>
-    <div id="textChannels">
-      <div class="channel active" data-name="общий" onclick="joinChannel('общий')">
-        # общий
-      </div>
-    </div>
-    <button class="add-channel" onclick="createTextChannel()">＋ канал</button>
+</aside>
 
-    <div class="channels-title">ГОЛОС</div>
-    <div id="voiceChannels">
-      <div class="channel voice" data-name="Общий" onclick="joinVoice('Общий')">
-        🔊 Общий
-      </div>
-    </div>
-    <button class="add-channel" onclick="createVoiceChannel()">＋ voice</button>
 
-    <!-- ===== USER PANEL ===== -->
-    <div class="user-panel">
-      <div class="user-info">
-        <img id="profileAvatar" src="/logo.svg">
-        <div class="user-text">
-          <div id="profileName">User</div>
-          <div class="status">В сети</div>
-        </div>
-      </div>
+<!-- CHANNELS -->
+<aside class="channels">
 
-      <div class="user-actions">
-        <button id="muteBtn" title="Mute">🎤</button>
-        <button id="deafenBtn" title="Deafen">🎧</button>
-        <button title="Выход" onclick="logout()">⎋</button>
-      </div>
-    </div>
+<div class="channels-title">ТЕКСТ</div>
 
-  </aside>
+<div id="textChannels">
 
-  <!-- ===== CHAT ===== -->
-  <main class="chat-area">
-
-    <header class="chat-header">
-      <span id="channelName"># общий</span>
-      <span id="online">🟢 Онлайн: 1</span>
-    </header>
-
-    <div id="messages" class="messages"></div>
-
-    <div class="chat-input">
-      <button class="icon-btn" onclick="toggleEmoji()">😀</button>
-      <button class="icon-btn" onclick="toggleGif()">GIF</button>
-      <input id="msg" placeholder="Сообщение..." autocomplete="off">
-      <button onclick="send()">➤</button>
-    </div>
-
-  </main>
-
-  <!-- ===== USERS ===== -->
-  <aside class="users">
-    <div class="users-title">Онлайн</div>
-    <div id="users"></div>
-  </aside>
+<div class="channel text active"
+onclick="joinChannel('общий')">
+общий
+</div>
 
 </div>
 
-<!-- ===== EMOJI / GIF PICKERS ===== -->
-<div id="emojiPicker" class="emoji-picker hidden"></div>
-<div id="gifPicker" class="gif-picker hidden"></div>
+<button class="add-channel"
+onclick="createTextChannel()">
+＋ канал
+</button>
 
-<!-- ===== VOICE OVERLAY ===== -->
-<div id="voiceOverlay" class="voice-overlay hidden">
-  <div class="voice-title">🎙️ В голосе</div>
-  <div id="voiceUsers"></div>
+
+<div class="channels-title">ГОЛОС</div>
+
+<div id="voiceChannels">
+
+<div class="channel voice"
+onclick="joinVoice('Общий')">
+Общий
 </div>
 
-<!-- ===== SCRIPTS ===== -->
+</div>
+
+<button class="add-channel"
+onclick="createVoiceChannel()">
+＋ voice
+</button>
+
+
+<!-- USER PANEL -->
+<div class="user-panel">
+
+<div class="user-info">
+
+<img id="profileAvatar"
+src="/logo.svg">
+
+<div class="user-text">
+
+<div id="profileName">
+User
+</div>
+
+<div class="status">
+В сети
+</div>
+
+</div>
+
+</div>
+
+
+<div class="user-actions">
+
+<button onclick="toggleMute()">
+🎤
+</button>
+
+<button onclick="toggleDeafen()">
+🎧
+</button>
+
+<button onclick="logout()">
+⎋
+</button>
+
+</div>
+
+</div>
+
+</aside>
+
+
+<!-- CHAT AREA -->
+<main class="chat-area">
+
+<header class="chat-header">
+
+<span id="channelName">
+# общий
+</span>
+
+<span id="onlineCount">
+🟢 Онлайн
+</span>
+
+</header>
+
+
+<div id="messages"
+class="messages">
+</div>
+
+
+<div class="chat-input">
+
+<input id="msg"
+placeholder="Написать сообщение..."
+autocomplete="off">
+
+<button onclick="sendMessage()">
+➤
+</button>
+
+</div>
+
+</main>
+
+
+<!-- USERS -->
+<aside class="users">
+
+<div class="users-title">
+В голосе
+</div>
+
+<div id="voiceUserList">
+</div>
+
+</aside>
+
+</div>
+
+
+<!-- VOICE OVERLAY -->
+<div id="voiceOverlay"
+class="voice-overlay hidden">
+
+<div class="voice-title">
+🎙️ Voice Channel:
+<span id="voiceChannelName"></span>
+</div>
+
+<div id="voiceUsers">
+</div>
+
+<button onclick="leaveVoice()"
+class="leave-btn">
+Выйти
+</button>
+
+</div>
+
+
 <script src="/script.js"></script>
 <script src="/voice.js"></script>
 
-<script>
-  document.getElementById("profileName").textContent =
-    localStorage.getItem("username") || "Guest";
 
-  function logout() {
-    localStorage.clear();
-    location.href = "/auth.html";
-  }
+<script>
+
+document.getElementById("profileName").textContent =
+localStorage.getItem("username") || "Guest";
+
+
+function logout(){
+
+localStorage.clear();
+
+location.href="/auth.html";
+
+}
+
 </script>
+
 
 </body>
 </html>
