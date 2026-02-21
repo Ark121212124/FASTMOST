@@ -1,15 +1,28 @@
-const voiceRooms = {};
+if(d.type === "voice-join"){
 
-function broadcastVoice(channel){
+ ws.voice = d.channel;
 
- const users =
- voiceRooms[channel] || [];
+ ws.username = d.user;
 
- for(const ws of clients.values()){
+ const users = [];
 
-  if(ws.voice === channel){
+ for(const client of clients.values()){
 
-   send(ws,{
+  if(client.voice === d.channel){
+
+   users.push({
+    username:client.username
+   });
+
+  }
+
+ }
+
+ for(const client of clients.values()){
+
+  if(client.voice === d.channel){
+
+   send(client,{
     type:"voice-users",
     users
    });
@@ -21,39 +34,7 @@ function broadcastVoice(channel){
 }
 
 
-if(d.type === "voice-join"){
-
- ws.voice = d.channel;
-
- ws.username = d.user;
-
- if(!voiceRooms[d.channel])
- voiceRooms[d.channel] = [];
-
- voiceRooms[d.channel]
- .push({
-  id:ws.id,
-  username:ws.username
- });
-
- broadcastVoice(d.channel);
-
-}
-
-
 if(d.type === "voice-leave"){
-
- const room =
- voiceRooms[ws.voice];
-
- if(room){
-
-  voiceRooms[ws.voice] =
-  room.filter(u => u.id !== ws.id);
-
- }
-
- broadcastVoice(ws.voice);
 
  ws.voice = null;
 
