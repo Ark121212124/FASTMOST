@@ -1,105 +1,120 @@
-window.register = async function(){
+// REGISTER
+async function register() {
 
- const name =
- document.getElementById("name").value;
+  const name =
+    document.getElementById("name").value;
 
- const email =
- document.getElementById("email").value;
+  const email =
+    document.getElementById("email").value;
 
- const password =
- document.getElementById("password").value;
+  const password =
+    document.getElementById("password").value;
 
- const res =
- await fetch("/api/register",{
+  const res = await fetch("/api/register", {
 
-  method:"POST",
+    method: "POST",
 
-  headers:{
-   "Content-Type":"application/json"
-  },
+    headers: {
+      "Content-Type": "application/json"
+    },
 
-  body:JSON.stringify({
-   name,email,password
-  })
+    body: JSON.stringify({
+      name,
+      email,
+      password
+    })
 
- });
+  });
 
- alert(await res.text());
+  const data = await res.json();
 
-};
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
 
+  alert("Ваш код подтверждения: " + data.code);
 
-window.verify = async function(){
-
- const email =
- document.getElementById("email").value;
-
- const code =
- document.getElementById("code").value;
-
- const res =
- await fetch("/api/verify",{
-
-  method:"POST",
-
-  headers:{
-   "Content-Type":"application/json"
-  },
-
-  body:JSON.stringify({
-   email,code
-  })
-
- });
-
- alert(await res.text());
-
-};
+}
 
 
-window.login = async function(){
+// VERIFY
+async function verify() {
 
- const email =
- document.getElementById("email").value;
+  const email =
+    document.getElementById("email").value;
 
- const password =
- document.getElementById("password").value;
+  const code =
+    document.getElementById("code").value;
 
- const res =
- await fetch("/api/login",{
+  const res =
+    await fetch("/api/verify", {
 
-  method:"POST",
+      method: "POST",
 
-  headers:{
-   "Content-Type":"application/json"
-  },
+      headers: {
+        "Content-Type": "application/json"
+      },
 
-  body:JSON.stringify({
-   email,password
-  })
+      body: JSON.stringify({
+        email,
+        code
+      })
 
- });
+    });
 
- if(!res.ok){
+  const data =
+    await res.json();
 
-  alert(await res.text());
-  return;
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
 
- }
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("username", data.name);
 
- const data =
- await res.json();
+  location.href = "/index.html";
 
- localStorage.setItem(
-  "token",
-  data.token
- );
+}
 
- localStorage.setItem(
-  "username",
-  data.name
- );
 
- location.href="/";
+// LOGIN
+async function login() {
 
-};
+  const email =
+    document.getElementById("email").value;
+
+  const password =
+    document.getElementById("password").value;
+
+  const res =
+    await fetch("/api/login", {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+        email,
+        password
+      })
+
+    });
+
+  const data =
+    await res.json();
+
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("username", data.name);
+
+  location.href = "/index.html";
+
+}
