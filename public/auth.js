@@ -1,8 +1,4 @@
-// ======================
-// FASTMOST AUTH SYSTEM
-// ======================
-
-async function register(){
+window.register = async function(){
 
  const name =
  document.getElementById("name").value;
@@ -12,13 +8,6 @@ async function register(){
 
  const password =
  document.getElementById("password").value;
-
- if(!name || !email || !password){
-
-  alert("Заполни все поля");
-  return;
-
- }
 
  const res =
  await fetch("/api/register",{
@@ -35,37 +24,18 @@ async function register(){
 
  });
 
- const text =
- await res.text();
+ alert(await res.text());
 
- if(res.ok){
-
-  alert("Код отправлен на email");
-
- }else{
-
-  alert(text);
-
- }
-
-}
+};
 
 
-
-async function verify(){
+window.verify = async function(){
 
  const email =
  document.getElementById("email").value;
 
  const code =
  document.getElementById("code").value;
-
- if(!code){
-
-  alert("Введи код");
-  return;
-
- }
 
  const res =
  await fetch("/api/verify",{
@@ -82,21 +52,12 @@ async function verify(){
 
  });
 
- if(res.ok){
+ alert(await res.text());
 
-  alert("Email подтвержден");
-
- }else{
-
-  alert("Ошибка подтверждения");
-
- }
-
-}
+};
 
 
-
-async function login(){
+window.login = async function(){
 
  const email =
  document.getElementById("email").value;
@@ -121,7 +82,7 @@ async function login(){
 
  if(!res.ok){
 
-  alert("Ошибка входа");
+  alert(await res.text());
   return;
 
  }
@@ -139,11 +100,6 @@ async function login(){
   data.name
  );
 
- localStorage.setItem(
-  "avatar",
-  data.avatar
- );
-
  location.href="/";
 
-}
+};
