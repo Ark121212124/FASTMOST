@@ -1,22 +1,23 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>FASTMOST — Вход</title>
-  <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
+<link rel="stylesheet" href="/styles.css">
 
-<div class="auth-box">
-  <img src="/logo.svg" width="120">
+<div class="auth-container">
 
-  <input id="u" placeholder="Логин">
-  <input id="p" type="password" placeholder="Пароль">
+<h2>FASTMOST</h2>
 
-  <button class="primary" onclick="login()">Войти</button>
-  <button onclick="register()">Регистрация</button>
+<input id="name" placeholder="Имя">
+
+<input id="email" placeholder="Email">
+
+<input id="password" type="password" placeholder="Пароль">
+
+<button onclick="register()">Регистрация</button>
+
+<input id="code" placeholder="Код подтверждения">
+
+<button onclick="verify()">Подтвердить</button>
+
+<button onclick="login()">Войти</button>
+
 </div>
 
 <script src="/auth.js"></script>
-</body>
-</html>
