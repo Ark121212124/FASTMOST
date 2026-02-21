@@ -1,5 +1,5 @@
 // ==========================
-// FASTMOST VOICE FINAL FIXED
+// FASTMOST VOICE SYSTEM FINAL (FREE TURN)
 // ==========================
 
 let localStream = null;
@@ -8,13 +8,46 @@ let myId = null;
 
 const peers = {};
 
-const RTC_CONFIG = {
- iceServers: [
-  { urls: "stun:stun.l.google.com:19302" }
- ]
-};
-
 let speakingState = false;
+
+
+// ==========================
+// FREE TURN + STUN SERVERS
+// ==========================
+
+const RTC_CONFIG = {
+
+ iceServers: [
+
+  {
+   urls: "stun:stun.l.google.com:19302"
+  },
+
+  {
+   urls: "stun:openrelay.metered.ca:80"
+  },
+
+  {
+   urls: "turn:openrelay.metered.ca:80",
+   username: "openrelayproject",
+   credential: "openrelayproject"
+  },
+
+  {
+   urls: "turn:openrelay.metered.ca:443",
+   username: "openrelayproject",
+   credential: "openrelayproject"
+  },
+
+  {
+   urls: "turn:openrelay.metered.ca:443?transport=tcp",
+   username: "openrelayproject",
+   credential: "openrelayproject"
+  }
+
+ ]
+
+};
 
 
 // ==========================
@@ -22,6 +55,9 @@ let speakingState = false;
 // ==========================
 
 window.joinVoice = async function(channel){
+
+ if(currentVoice === channel)
+ return;
 
  currentVoice = channel;
 
@@ -32,10 +68,25 @@ window.joinVoice = async function(channel){
  .innerText = channel;
 
 
- localStream =
- await navigator.mediaDevices.getUserMedia({
-  audio:true
- });
+ try{
+
+  localStream =
+  await navigator.mediaDevices.getUserMedia({
+
+   audio:{
+    echoCancellation:true,
+    noiseSuppression:true,
+    autoGainControl:true
+   }
+
+  });
+
+ }catch(e){
+
+  alert("Нет доступа к микрофону");
+  return;
+
+ }
 
 
  startSpeakingDetection(localStream);
@@ -44,10 +95,44 @@ window.joinVoice = async function(channel){
  ws.send(JSON.stringify({
 
   type:"voice-join",
+
   channel,
+
   user:localStorage.getItem("username")
 
  }));
+
+};
+
+
+// ==========================
+// LEAVE VOICE
+// ==========================
+
+window.leaveVoice = function(){
+
+ ws.send(JSON.stringify({
+  type:"voice-leave"
+ }));
+
+
+ Object.values(peers)
+ .forEach(pc=>pc.close());
+
+ for(const id in peers)
+ delete peers[id];
+
+
+ if(localStream){
+
+  localStream.getTracks()
+  .forEach(track=>track.stop());
+
+ }
+
+
+ document.getElementById("voiceOverlay")
+ .classList.add("hidden");
 
 };
 
@@ -58,9 +143,9 @@ window.joinVoice = async function(channel){
 
 function createPeer(id){
 
- if(peers[id]) return peers[id];
+ if(peers[id])
+ return peers[id];
 
- console.log("Creating peer:", id);
 
  const pc =
  new RTCPeerConnection(RTC_CONFIG);
@@ -68,17 +153,17 @@ function createPeer(id){
  peers[id] = pc;
 
 
- // add local audio
+ // SEND AUDIO
  localStream.getTracks()
  .forEach(track=>{
+
   pc.addTrack(track, localStream);
+
  });
 
 
- // receive remote audio
+ // RECEIVE AUDIO
  pc.ontrack = event => {
-
-  console.log("Receiving audio from:", id);
 
   let audio =
   document.getElementById("audio-"+id);
@@ -88,11 +173,12 @@ function createPeer(id){
    audio =
    document.createElement("audio");
 
-   audio.id="audio-"+id;
+   audio.id =
+   "audio-"+id;
 
-   audio.autoplay=true;
+   audio.autoplay = true;
 
-   audio.controls=false;
+   audio.playsInline = true;
 
    document.body.appendChild(audio);
 
@@ -122,6 +208,7 @@ function createPeer(id){
   }
 
  };
+
 
  return pc;
 
@@ -158,12 +245,14 @@ function startSpeakingDetection(stream){
   let volume = 0;
 
   for(let i=0;i<data.length;i++)
-   volume += data[i];
+  volume += data[i];
 
   volume /= data.length;
 
+
   const speaking =
-  volume > 15;
+  volume > 20;
+
 
   if(speaking !== speakingState){
 
@@ -179,9 +268,11 @@ function startSpeakingDetection(stream){
 
   }
 
+
   requestAnimationFrame(detect);
 
  }
+
 
  detect();
 
@@ -197,18 +288,23 @@ function renderVoiceUsers(users){
  const container =
  document.getElementById("voiceUsers");
 
- container.innerHTML="";
+ container.innerHTML = "";
+
 
  users.forEach(user=>{
 
   const div =
   document.createElement("div");
 
-  div.id="voice-user-"+user.id;
+  div.className =
+  "voice-user";
 
-  div.className="voice-user";
+  div.id =
+  "voice-user-"+user.id;
 
-  div.innerText="🎤 "+user.username;
+  div.innerText =
+  "🎤 "+user.username;
+
 
   container.appendChild(div);
 
@@ -227,29 +323,33 @@ ws.onmessage = async event => {
  JSON.parse(event.data);
 
 
+ // INIT
  if(d.type==="init")
  myId = d.id;
 
 
- // ======================
  // USERS LIST
- // ======================
-
  if(d.type==="voice-users"){
 
   renderVoiceUsers(d.users);
 
+
   for(const user of d.users){
 
-   if(user.id===myId) continue;
+   if(user.id===myId)
+   continue;
+
 
    const pc =
    createPeer(user.id);
 
+
    const offer =
    await pc.createOffer();
 
+
    await pc.setLocalDescription(offer);
+
 
    ws.send(JSON.stringify({
 
@@ -266,23 +366,24 @@ ws.onmessage = async event => {
  }
 
 
- // ======================
- // RECEIVE OFFER
- // ======================
-
+ // OFFER
  if(d.type==="voice-offer"){
 
   const pc =
   createPeer(d.from);
 
+
   await pc.setRemoteDescription(
    new RTCSessionDescription(d.offer)
   );
 
+
   const answer =
   await pc.createAnswer();
 
+
   await pc.setLocalDescription(answer);
+
 
   ws.send(JSON.stringify({
 
@@ -297,10 +398,7 @@ ws.onmessage = async event => {
  }
 
 
- // ======================
- // RECEIVE ANSWER
- // ======================
-
+ // ANSWER
  if(d.type==="voice-answer"){
 
   const pc =
@@ -317,10 +415,7 @@ ws.onmessage = async event => {
  }
 
 
- // ======================
  // ICE
- // ======================
-
  if(d.type==="voice-ice"){
 
   const pc =
@@ -337,10 +432,7 @@ ws.onmessage = async event => {
  }
 
 
- // ======================
- // SPEAKING
- // ======================
-
+ // SPEAKING INDICATOR
  if(d.type==="voice-speaking"){
 
   const el =
@@ -348,13 +440,26 @@ ws.onmessage = async event => {
    "voice-user-"+d.id
   );
 
+
   if(el){
 
-   el.style.background =
-   d.speaking ? "#22c55e" : "";
+   if(d.speaking){
 
-   el.style.color =
-   d.speaking ? "white" : "";
+    el.style.background =
+    "#22c55e";
+
+    el.style.color =
+    "white";
+
+   }else{
+
+    el.style.background =
+    "";
+
+    el.style.color =
+    "";
+
+   }
 
   }
 
