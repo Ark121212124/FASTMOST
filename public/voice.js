@@ -2,70 +2,13 @@
 // FASTMOST VOICE SYSTEM
 // =============================
 
+
 let localStream = null;
 let currentVoice = null;
-let myId = null;
 
 const peers = {};
 
-
-// =============================
-// CONNECT WS
-// =============================
-
-const ws = new WebSocket(
- location.protocol === "https:"
- ? "wss://" + location.host
- : "ws://" + location.host
-);
-
-
-ws.onopen = () => {
-
- console.log("Voice WS connected");
-
-};
-
-
-ws.onerror = (e) => {
-
- console.error("Voice WS error:", e);
-
-};
-
-
-ws.onclose = () => {
-
- console.log("Voice WS closed");
-
-};
-
-
-// =============================
-// RECEIVE EVENTS
-// =============================
-
-ws.onmessage = async (event) => {
-
- const data = JSON.parse(event.data);
-
- console.log("VOICE EVENT:", data);
-
-
- if (data.type === "init") {
-
-  myId = data.id;
-
- }
-
-
- if (data.type === "voice-users") {
-
-  renderVoiceUsers(data.users);
-
- }
-
-};
+window.localStream = null;
 
 
 // =============================
@@ -83,11 +26,11 @@ async function joinVoice(channel){
    audio: true
   });
 
- } catch (e) {
+  window.localStream = localStream;
+
+ } catch (e){
 
   alert("Разреши доступ к микрофону");
-
-  console.error(e);
 
   return;
 
@@ -112,9 +55,9 @@ async function joinVoice(channel){
 
   type: "voice-join",
 
-  channel: channel,
+  channel,
 
-  user: localStorage.getItem("username") || "User"
+  user: localStorage.getItem("username") || "Guest"
 
  }));
 
@@ -122,7 +65,7 @@ async function joinVoice(channel){
 
 
 // =============================
-// LEAVE VOICE
+// LEAVE
 // =============================
 
 function leaveVoice(){
@@ -137,11 +80,8 @@ function leaveVoice(){
  }));
 
 
- localStream?.getTracks().forEach(track => {
-
-  track.stop();
-
- });
+ localStream?.getTracks()
+ .forEach(track => track.stop());
 
 
  document
@@ -169,6 +109,8 @@ function renderVoiceUsers(users){
  const container =
  document.getElementById("voiceUsers");
 
+ if (!container) return;
+
 
  container.innerHTML = "";
 
@@ -178,25 +120,19 @@ function renderVoiceUsers(users){
   const div =
   document.createElement("div");
 
+  div.className =
+  "voice-user";
 
-  div.className = "voice-user";
-
-
-  if (user.id === myId) {
-
-   div.innerHTML =
-   "🟢 <b>" + user.username + " (Вы)</b>";
-
-  } else {
-
-   div.innerHTML =
-   "🎤 " + user.username;
-
-  }
-
+  div.innerHTML =
+  "🎤 " + user.username;
 
   container.appendChild(div);
 
  });
 
 }
+
+
+// делаем глобальной
+window.renderVoiceUsers =
+renderVoiceUsers;
