@@ -720,3 +720,60 @@ body {
 
   cursor: pointer;
 }
+.auth-container {
+
+ width: 320px;
+
+ margin: 100px auto;
+
+ background: #15151c;
+
+ padding: 20px;
+
+ border-radius: 12px;
+
+ display: flex;
+
+ flex-direction: column;
+
+ gap: 10px;
+
+ box-shadow: 0 0 20px rgba(0,0,0,0.5);
+
+}
+
+.auth-container input {
+
+ padding: 10px;
+
+ border-radius: 8px;
+
+ border: none;
+
+ background: #0f0f14;
+
+ color: white;
+
+}
+
+.auth-container button {
+
+ padding: 10px;
+
+ border: none;
+
+ border-radius: 8px;
+
+ background: #5865f2;
+
+ color: white;
+
+ cursor: pointer;
+
+}
+
+.auth-container button:hover {
+
+ opacity: 0.9;
+
+}
