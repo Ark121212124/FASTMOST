@@ -630,3 +630,93 @@ body {
 .hidden {
   display: none;
 }
+
+.voice-container {
+
+  position: absolute;
+
+  top: 60px;
+  left: 332px;
+  right: 230px;
+  bottom: 0;
+
+  background: #0f172a;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.voice-header {
+
+  height: 60px;
+
+  background: #111827;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 0 20px;
+
+  border-bottom: 1px solid #1f2937;
+}
+
+.voice-users {
+
+  padding: 20px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+.voice-user-card {
+
+  background: #1f2937;
+
+  padding: 12px;
+
+  border-radius: 10px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  transition: 0.2s;
+}
+
+.voice-user-card img {
+
+  width: 40px;
+  height: 40px;
+
+  border-radius: 50%;
+}
+
+.voice-user-card.speaking {
+
+  background: #065f46;
+
+  box-shadow: 0 0 10px #22c55e;
+}
+
+.leave-btn {
+
+  background: #ef4444;
+
+  border: none;
+
+  padding: 8px 14px;
+
+  border-radius: 8px;
+
+  color: white;
+
+  cursor: pointer;
+}
