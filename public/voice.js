@@ -1,19 +1,21 @@
+// =======================
+// FASTMOST VOICE
+// =======================
+
 let currentVoice = null;
 
 
-// JOIN VOICE
-async function joinVoice(channel){
+// JOIN
+window.joinVoice = function(channel){
 
- console.log("Joining voice:", channel);
+ console.log("JOIN VOICE:", channel);
 
  currentVoice = channel;
-
 
  document
  .getElementById("voiceOverlay")
  .classList
  .remove("hidden");
-
 
  document
  .getElementById("voiceChannelName")
@@ -30,11 +32,11 @@ async function joinVoice(channel){
 
  }));
 
-}
+};
 
 
 // LEAVE
-function leaveVoice(){
+window.leaveVoice = function(){
 
  ws.send(JSON.stringify({
 
@@ -42,33 +44,27 @@ function leaveVoice(){
 
  }));
 
-
  document
  .getElementById("voiceOverlay")
  .classList
  .add("hidden");
 
-
  document
  .getElementById("voiceUsers")
- .innerHTML = "";
+ .innerHTML="";
 
-
- currentVoice = null;
-
-}
+};
 
 
 // RENDER USERS
-function renderVoiceUsers(users){
+window.renderVoiceUsers = function(users){
 
  const container =
  document.getElementById("voiceUsers");
 
- container.innerHTML = "";
+ container.innerHTML="";
 
-
- users.forEach(user => {
+ users.forEach(user=>{
 
   const div =
   document.createElement("div");
@@ -80,4 +76,4 @@ function renderVoiceUsers(users){
 
  });
 
-}
+};
