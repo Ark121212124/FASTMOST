@@ -1,5 +1,5 @@
 // ==========================
-// FASTMOST REAL VOICE SYSTEM
+// FASTMOST VOICE SYSTEM FINAL
 // ==========================
 
 let localStream = null;
@@ -9,21 +9,20 @@ let myId = null;
 const peers = {};
 
 const RTC_CONFIG = {
- iceServers: [
-  { urls: "stun:stun.l.google.com:19302" }
+ iceServers:[
+  {urls:"stun:stun.l.google.com:19302"}
  ]
 };
 
-let speaking = false;
+let speakingState = false;
 
 
 // ==========================
 // JOIN VOICE
 // ==========================
 
-window.joinVoice = async function(channel){
-
- console.log("Joining voice:", channel);
+window.joinVoice =
+async function(channel){
 
  currentVoice = channel;
 
@@ -40,16 +39,12 @@ window.joinVoice = async function(channel){
 
   localStream =
   await navigator.mediaDevices.getUserMedia({
-   audio:{
-    echoCancellation:true,
-    noiseSuppression:true,
-    autoGainControl:true
-   }
+   audio:true
   });
 
- }catch(e){
+ }catch{
 
-  alert("Разреши доступ к микрофону");
+  alert("Разреши микрофон");
   return;
 
  }
@@ -129,15 +124,16 @@ function createPeer(id){
    audio =
    document.createElement("audio");
 
-   audio.id = "audio-"+id;
+   audio.id="audio-"+id;
 
-   audio.autoplay = true;
+   audio.autoplay=true;
 
    document.body.appendChild(audio);
 
   }
 
-  audio.srcObject = e.streams[0];
+  audio.srcObject =
+  e.streams[0];
 
  };
 
@@ -166,7 +162,7 @@ function createPeer(id){
 
 
 // ==========================
-// SPEAK DETECTION (VAD)
+// SPEAK DETECTION
 // ==========================
 
 function startSpeakingDetection(stream){
@@ -194,25 +190,25 @@ function startSpeakingDetection(stream){
 
   let volume = 0;
 
-  for(let i=0;i<data.length;i++){
+  for(let i=0;i<data.length;i++)
    volume += data[i];
-  }
 
   volume /= data.length;
 
-  const isSpeaking =
-  volume > 25;
+  const speaking =
+  volume > 15;
 
 
-  if(isSpeaking !== speaking){
+  if(speaking !== speakingState){
 
-   speaking = isSpeaking;
+   speakingState =
+   speaking;
 
    ws.send(JSON.stringify({
 
     type:"voice-speaking",
 
-    speaking:isSpeaking
+    speaking
 
    }));
 
@@ -231,7 +227,7 @@ function startSpeakingDetection(stream){
 // RENDER USERS
 // ==========================
 
-window.renderVoiceUsers = function(users){
+function renderVoiceUsers(users){
 
  const container =
  document.getElementById("voiceUsers");
@@ -249,40 +245,38 @@ window.renderVoiceUsers = function(users){
   div.className =
   "voice-user";
 
-  div.innerHTML =
+  div.innerText =
   "🎤 "+user.username;
 
   container.appendChild(div);
 
  });
 
-};
+}
 
 
 // ==========================
 // WS EVENTS
 // ==========================
 
-ws.addEventListener("message", async e => {
+ws.addEventListener("message",
+async e=>{
 
- const d = JSON.parse(e.data);
+ const d =
+ JSON.parse(e.data);
 
 
- if(d.type === "init")
+ if(d.type==="init")
  myId = d.id;
 
 
- // ==========================
- // USERS JOIN
- // ==========================
-
- if(d.type === "voice-users"){
+ if(d.type==="voice-users"){
 
   renderVoiceUsers(d.users);
 
   for(const u of d.users){
 
-   if(u.id === myId) continue;
+   if(u.id===myId) continue;
 
    const pc =
    createPeer(u.id);
@@ -307,11 +301,7 @@ ws.addEventListener("message", async e => {
  }
 
 
- // ==========================
- // RECEIVE OFFER
- // ==========================
-
- if(d.type === "voice-offer"){
+ if(d.type==="voice-offer"){
 
   const pc =
   createPeer(d.from);
@@ -336,11 +326,7 @@ ws.addEventListener("message", async e => {
  }
 
 
- // ==========================
- // RECEIVE ANSWER
- // ==========================
-
- if(d.type === "voice-answer"){
+ if(d.type==="voice-answer"){
 
   await peers[d.from]
   ?.setRemoteDescription(d.answer);
@@ -348,11 +334,7 @@ ws.addEventListener("message", async e => {
  }
 
 
- // ==========================
- // RECEIVE ICE
- // ==========================
-
- if(d.type === "voice-ice"){
+ if(d.type==="voice-ice"){
 
   await peers[d.from]
   ?.addIceCandidate(d.candidate);
@@ -361,10 +343,10 @@ ws.addEventListener("message", async e => {
 
 
  // ==========================
- // SPEAKING INDICATOR
+ // SPEAKING VISUAL
  // ==========================
 
- if(d.type === "voice-speaking"){
+ if(d.type==="voice-speaking"){
 
   const el =
   document.getElementById(
@@ -375,11 +357,13 @@ ws.addEventListener("message", async e => {
 
    if(d.speaking){
 
-    el.classList.add("speaking");
+    el.style.background="#22c55e";
+    el.style.color="white";
 
    }else{
 
-    el.classList.remove("speaking");
+    el.style.background="";
+    el.style.color="";
 
    }
 
