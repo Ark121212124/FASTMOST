@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>FASTMOST — Платформа общения</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">FASTMOST</div>
+  <nav>
+    <a href="/">Главная</a>
+    <a href="/contacts.html">Контакты</a>
+    <a href="/auth.html">Войти</a>
+  </nav>
+  <a href="/index.html" class="btn-primary">Попробовать</a>
+</header>
+
+<section class="hero">
+  <h1>Платформа общения нового поколения</h1>
+  <p>Создавайте voice каналы, общайтесь и работайте вместе</p>
+  <a href="/index.html" class="btn-primary big">Начать бесплатно</a>
+</section>
+
+<section class="users">
+  <h2>Для кого FASTMOST</h2>
+
+  <div class="cards">
+
+    <div class="card">
+      <img src="/img/esports.jpg">
+      <h3>Киберспорт</h3>
+      <p>Общайтесь с командой в voice</p>
+      <a href="/index.html" class="btn-primary">Попробовать</a>
+    </div>
+
+    <div class="card">
+      <img src="/img/business.jpg">
+      <h3>Бизнес</h3>
+      <p>Конференции и встречи</p>
+      <a href="/index.html" class="btn-primary">Попробовать</a>
+    </div>
+
+    <div class="card">
+      <img src="/img/friends.jpg">
+      <h3>Друзья</h3>
+      <p>Общение без ограничений</p>
+      <a href="/index.html" class="btn-primary">Попробовать</a>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <p>Email: arktiko12@gmail.com</p>
+  <p>Телефон: 89530282920</p>
+  <a href="/privacy.html">Политика конфиденциальности</a>
+</footer>
+
+</body>
+</html>
