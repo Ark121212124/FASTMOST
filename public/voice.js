@@ -14,6 +14,8 @@ const RTC_CONFIG = {
  ]
 };
 
+let speaking = false;
+
 
 // ==========================
 // JOIN VOICE
@@ -34,17 +36,26 @@ window.joinVoice = async function(channel){
  .innerText = channel;
 
 
- localStream =
- await navigator.mediaDevices.getUserMedia({
-  audio: {
-   echoCancellation:true,
-   noiseSuppression:true,
-   autoGainControl:true
-  }
- });
+ try{
+
+  localStream =
+  await navigator.mediaDevices.getUserMedia({
+   audio:{
+    echoCancellation:true,
+    noiseSuppression:true,
+    autoGainControl:true
+   }
+  });
+
+ }catch(e){
+
+  alert("Разреши доступ к микрофону");
+  return;
+
+ }
 
 
- startSpeakingDetection();
+ startSpeakingDetection(localStream);
 
 
  ws.send(JSON.stringify({
@@ -155,23 +166,23 @@ function createPeer(id){
 
 
 // ==========================
-// SPEAK DETECTION
+// SPEAK DETECTION (VAD)
 // ==========================
 
-function startSpeakingDetection(){
+function startSpeakingDetection(stream){
 
  const ctx =
  new AudioContext();
 
  const mic =
- ctx.createMediaStreamSource(localStream);
+ ctx.createMediaStreamSource(stream);
 
  const analyser =
  ctx.createAnalyser();
 
- mic.connect(analyser);
-
  analyser.fftSize = 512;
+
+ mic.connect(analyser);
 
  const data =
  new Uint8Array(analyser.frequencyBinCount);
@@ -181,16 +192,31 @@ function startSpeakingDetection(){
 
   analyser.getByteFrequencyData(data);
 
-  const volume =
-  data.reduce((a,b)=>a+b)/data.length;
+  let volume = 0;
 
-  ws.send(JSON.stringify({
+  for(let i=0;i<data.length;i++){
+   volume += data[i];
+  }
 
-   type:"voice-speaking",
+  volume /= data.length;
 
-   speaking:volume > 20
+  const isSpeaking =
+  volume > 25;
 
-  }));
+
+  if(isSpeaking !== speaking){
+
+   speaking = isSpeaking;
+
+   ws.send(JSON.stringify({
+
+    type:"voice-speaking",
+
+    speaking:isSpeaking
+
+   }));
+
+  }
 
   requestAnimationFrame(detect);
 
@@ -217,7 +243,8 @@ window.renderVoiceUsers = function(users){
   const div =
   document.createElement("div");
 
-  div.id = "voice-user-"+user.id;
+  div.id =
+  "voice-user-"+user.id;
 
   div.className =
   "voice-user";
@@ -244,6 +271,10 @@ ws.addEventListener("message", async e => {
  if(d.type === "init")
  myId = d.id;
 
+
+ // ==========================
+ // USERS JOIN
+ // ==========================
 
  if(d.type === "voice-users"){
 
@@ -276,6 +307,10 @@ ws.addEventListener("message", async e => {
  }
 
 
+ // ==========================
+ // RECEIVE OFFER
+ // ==========================
+
  if(d.type === "voice-offer"){
 
   const pc =
@@ -301,6 +336,10 @@ ws.addEventListener("message", async e => {
  }
 
 
+ // ==========================
+ // RECEIVE ANSWER
+ // ==========================
+
  if(d.type === "voice-answer"){
 
   await peers[d.from]
@@ -309,6 +348,10 @@ ws.addEventListener("message", async e => {
  }
 
 
+ // ==========================
+ // RECEIVE ICE
+ // ==========================
+
  if(d.type === "voice-ice"){
 
   await peers[d.from]
@@ -316,6 +359,10 @@ ws.addEventListener("message", async e => {
 
  }
 
+
+ // ==========================
+ // SPEAKING INDICATOR
+ // ==========================
 
  if(d.type === "voice-speaking"){
 
@@ -326,8 +373,15 @@ ws.addEventListener("message", async e => {
 
   if(el){
 
-   el.style.color =
-   d.speaking ? "#22c55e" : "white";
+   if(d.speaking){
+
+    el.classList.add("speaking");
+
+   }else{
+
+    el.classList.remove("speaking");
+
+   }
 
   }
 
