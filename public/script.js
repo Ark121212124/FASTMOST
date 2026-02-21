@@ -1,40 +1,35 @@
+// =======================
+// FASTMOST GLOBAL WS
+// =======================
+
 window.ws = new WebSocket(
  location.protocol === "https:"
  ? "wss://" + location.host
  : "ws://" + location.host
 );
 
-let username =
-localStorage.getItem("username") || "Guest";
-
-
-ws.onopen = () => {
-
+window.ws.onopen = () => {
  console.log("WS connected");
-
 };
 
+window.ws.onmessage = (event) => {
 
-ws.onmessage = (event) => {
+ const data = JSON.parse(event.data);
 
- const data =
- JSON.parse(event.data);
-
- console.log("WS:", data);
-
+ console.log("WS event:", data);
 
  if(data.type === "voice-users"){
 
-  renderVoiceUsers(data.users);
+  window.renderVoiceUsers(data.users);
 
  }
 
 };
 
 
-// =================
-// CHAT (optional)
-// =================
+// =======================
+// CHAT
+// =======================
 
 function sendMessage(){
 
@@ -47,12 +42,52 @@ function sendMessage(){
 
   type:"message",
 
-  user:username,
+  text:input.value,
 
-  text:input.value
+  user:localStorage.getItem("username")
 
  }));
 
  input.value="";
+
+}
+
+
+// =======================
+// CHANNEL
+// =======================
+
+function joinChannel(name){
+
+ document.getElementById("channelName")
+ .innerText = "# " + name;
+
+}
+
+
+// =======================
+// CREATE CHANNEL
+// =======================
+
+function createVoiceChannel(){
+
+ const name =
+ prompt("Название voice:");
+
+ if(!name) return;
+
+ const div =
+ document.createElement("div");
+
+ div.className = "channel voice";
+
+ div.innerText = name;
+
+ div.onclick =
+ () => joinVoice(name);
+
+ document
+ .getElementById("voiceChannels")
+ .appendChild(div);
 
 }
