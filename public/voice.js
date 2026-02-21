@@ -1,5 +1,5 @@
 // ==========================
-// FASTMOST VOICE SYSTEM FINAL
+// FASTMOST VOICE FINAL FIXED
 // ==========================
 
 let localStream = null;
@@ -9,8 +9,8 @@ let myId = null;
 const peers = {};
 
 const RTC_CONFIG = {
- iceServers:[
-  {urls:"stun:stun.l.google.com:19302"}
+ iceServers: [
+  { urls: "stun:stun.l.google.com:19302" }
  ]
 };
 
@@ -21,33 +21,21 @@ let speakingState = false;
 // JOIN VOICE
 // ==========================
 
-window.joinVoice =
-async function(channel){
+window.joinVoice = async function(channel){
 
  currentVoice = channel;
 
- document
- .getElementById("voiceOverlay")
+ document.getElementById("voiceOverlay")
  .classList.remove("hidden");
 
- document
- .getElementById("voiceChannelName")
+ document.getElementById("voiceChannelName")
  .innerText = channel;
 
 
- try{
-
-  localStream =
-  await navigator.mediaDevices.getUserMedia({
-   audio:true
-  });
-
- }catch{
-
-  alert("Разреши микрофон");
-  return;
-
- }
+ localStream =
+ await navigator.mediaDevices.getUserMedia({
+  audio:true
+ });
 
 
  startSpeakingDetection(localStream);
@@ -56,38 +44,10 @@ async function(channel){
  ws.send(JSON.stringify({
 
   type:"voice-join",
-
   channel,
-
   user:localStorage.getItem("username")
 
  }));
-
-};
-
-
-// ==========================
-// LEAVE
-// ==========================
-
-window.leaveVoice = function(){
-
- ws.send(JSON.stringify({
-  type:"voice-leave"
- }));
-
- Object.values(peers)
- .forEach(pc=>pc.close());
-
- for(const id in peers)
- delete peers[id];
-
- localStream?.getTracks()
- .forEach(track=>track.stop());
-
- document
- .getElementById("voiceOverlay")
- .classList.add("hidden");
 
 };
 
@@ -100,21 +60,25 @@ function createPeer(id){
 
  if(peers[id]) return peers[id];
 
+ console.log("Creating peer:", id);
+
  const pc =
  new RTCPeerConnection(RTC_CONFIG);
 
  peers[id] = pc;
 
 
+ // add local audio
  localStream.getTracks()
  .forEach(track=>{
-
   pc.addTrack(track, localStream);
-
  });
 
 
- pc.ontrack = e => {
+ // receive remote audio
+ pc.ontrack = event => {
+
+  console.log("Receiving audio from:", id);
 
   let audio =
   document.getElementById("audio-"+id);
@@ -128,19 +92,22 @@ function createPeer(id){
 
    audio.autoplay=true;
 
+   audio.controls=false;
+
    document.body.appendChild(audio);
 
   }
 
   audio.srcObject =
-  e.streams[0];
+  event.streams[0];
 
  };
 
 
- pc.onicecandidate = e => {
+ // ICE
+ pc.onicecandidate = event => {
 
-  if(e.candidate){
+  if(event.candidate){
 
    ws.send(JSON.stringify({
 
@@ -148,7 +115,7 @@ function createPeer(id){
 
     to:id,
 
-    candidate:e.candidate
+    candidate:event.candidate
 
    }));
 
@@ -198,11 +165,9 @@ function startSpeakingDetection(stream){
   const speaking =
   volume > 15;
 
-
   if(speaking !== speakingState){
 
-   speakingState =
-   speaking;
+   speakingState = speaking;
 
    ws.send(JSON.stringify({
 
@@ -239,14 +204,11 @@ function renderVoiceUsers(users){
   const div =
   document.createElement("div");
 
-  div.id =
-  "voice-user-"+user.id;
+  div.id="voice-user-"+user.id;
 
-  div.className =
-  "voice-user";
+  div.className="voice-user";
 
-  div.innerText =
-  "🎤 "+user.username;
+  div.innerText="🎤 "+user.username;
 
   container.appendChild(div);
 
@@ -259,27 +221,30 @@ function renderVoiceUsers(users){
 // WS EVENTS
 // ==========================
 
-ws.addEventListener("message",
-async e=>{
+ws.onmessage = async event => {
 
  const d =
- JSON.parse(e.data);
+ JSON.parse(event.data);
 
 
  if(d.type==="init")
  myId = d.id;
 
 
+ // ======================
+ // USERS LIST
+ // ======================
+
  if(d.type==="voice-users"){
 
   renderVoiceUsers(d.users);
 
-  for(const u of d.users){
+  for(const user of d.users){
 
-   if(u.id===myId) continue;
+   if(user.id===myId) continue;
 
    const pc =
-   createPeer(u.id);
+   createPeer(user.id);
 
    const offer =
    await pc.createOffer();
@@ -290,7 +255,7 @@ async e=>{
 
     type:"voice-offer",
 
-    to:u.id,
+    to:user.id,
 
     offer
 
@@ -301,12 +266,18 @@ async e=>{
  }
 
 
+ // ======================
+ // RECEIVE OFFER
+ // ======================
+
  if(d.type==="voice-offer"){
 
   const pc =
   createPeer(d.from);
 
-  await pc.setRemoteDescription(d.offer);
+  await pc.setRemoteDescription(
+   new RTCSessionDescription(d.offer)
+  );
 
   const answer =
   await pc.createAnswer();
@@ -326,25 +297,49 @@ async e=>{
  }
 
 
+ // ======================
+ // RECEIVE ANSWER
+ // ======================
+
  if(d.type==="voice-answer"){
 
-  await peers[d.from]
-  ?.setRemoteDescription(d.answer);
+  const pc =
+  peers[d.from];
+
+  if(pc){
+
+   await pc.setRemoteDescription(
+    new RTCSessionDescription(d.answer)
+   );
+
+  }
 
  }
 
+
+ // ======================
+ // ICE
+ // ======================
 
  if(d.type==="voice-ice"){
 
-  await peers[d.from]
-  ?.addIceCandidate(d.candidate);
+  const pc =
+  peers[d.from];
+
+  if(pc){
+
+   await pc.addIceCandidate(
+    new RTCIceCandidate(d.candidate)
+   );
+
+  }
 
  }
 
 
- // ==========================
- // SPEAKING VISUAL
- // ==========================
+ // ======================
+ // SPEAKING
+ // ======================
 
  if(d.type==="voice-speaking"){
 
@@ -355,20 +350,14 @@ async e=>{
 
   if(el){
 
-   if(d.speaking){
+   el.style.background =
+   d.speaking ? "#22c55e" : "";
 
-    el.style.background="#22c55e";
-    el.style.color="white";
-
-   }else{
-
-    el.style.background="";
-    el.style.color="";
-
-   }
+   el.style.color =
+   d.speaking ? "white" : "";
 
   }
 
  }
 
-});
+};
