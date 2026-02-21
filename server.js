@@ -5,21 +5,25 @@ const WebSocket=require("ws");
 const crypto=require("crypto");
 
 
-const PUBLIC=path.join(__dirname,"public");
+const PUBLIC =
+path.join(__dirname,"public");
 
+
+/* HTTP */
 const server=http.createServer((req,res)=>{
 
- const file=
- req.url==="/"
- ?"/index.html"
- :req.url;
+ const file =
+ req.url === "/"
+ ? "/index.html"
+ : req.url;
 
- const filePath=
+ const filePath =
  path.join(PUBLIC,file);
 
- fs.readFile(filePath,(e,data)=>{
 
-  if(e){
+ fs.readFile(filePath,(err,data)=>{
+
+  if(err){
 
    res.writeHead(404);
 
@@ -27,22 +31,28 @@ const server=http.createServer((req,res)=>{
 
   }
 
-  const ext=
-  path.extname(filePath);
 
   const types={
 
    ".html":"text/html",
+
    ".css":"text/css",
+
    ".js":"application/javascript",
+
    ".svg":"image/svg+xml"
 
   };
 
+
   res.writeHead(200,{
+
    "Content-Type":
-   types[ext]||"text/plain"
+   types[path.extname(filePath)]
+   || "text/plain"
+
   });
+
 
   res.end(data);
 
@@ -52,112 +62,141 @@ const server=http.createServer((req,res)=>{
 
 
 /* WEBSOCKET */
-const wss=
+const wss =
 new WebSocket.Server({server});
 
 
-const clients=new Map();
+const clients =
+new Map();
 
 
 function send(ws,data){
 
- if(ws.readyState===1)
+ if(ws.readyState === 1)
  ws.send(JSON.stringify(data));
+
+}
+
+
+function broadcastVoice(channel){
+
+ const users=[];
+
+ for(const [id,c] of clients){
+
+  if(c.voice === channel){
+
+   users.push({
+
+    id,
+
+    username:c.username
+
+   });
+
+  }
+
+ }
+
+
+ for(const c of clients.values()){
+
+  if(c.voice === channel){
+
+   send(c,{
+
+    type:"voice-users",
+
+    users
+
+   });
+
+  }
+
+ }
 
 }
 
 
 wss.on("connection",ws=>{
 
- ws.id=crypto.randomUUID();
+ ws.id =
+ crypto.randomUUID();
 
- ws.username="Guest";
+ ws.username =
+ "Guest";
 
- ws.voice=null;
+ ws.voice =
+ null;
+
 
  clients.set(ws.id,ws);
 
 
+ send(ws,{
+
+  type:"init",
+
+  id:ws.id
+
+ });
+
+
  ws.on("message",raw=>{
 
-  const d=JSON.parse(raw);
+  const d =
+  JSON.parse(raw);
 
 
-  if(d.type==="voice-join"){
+  if(d.type === "voice-join"){
 
-   ws.voice=d.channel;
+   ws.voice =
+   d.channel;
 
-   ws.username=d.user;
-
-
-   const users=[];
-
-   for(const [id,c] of clients){
-
-    if(c.voice===ws.voice){
-
-     users.push({
-      id,
-      username:c.username
-     });
-
-    }
-
-   }
+   ws.username =
+   d.user || "Guest";
 
 
-   send(ws,{
-    type:"voice-users",
-    users
-   });
-
-
-   for(const c of clients.values()){
-
-    if(c.voice===ws.voice){
-
-     send(c,{
-      type:"voice-user-joined",
-      users
-     });
-
-    }
-
-   }
+   broadcastVoice(ws.voice);
 
   }
 
 
-  if(d.type==="voice-leave"){
+  if(d.type === "voice-leave"){
 
-   ws.voice=null;
+   const old =
+   ws.voice;
 
-   for(const c of clients.values()){
+   ws.voice =
+   null;
 
-    send(c,{
-     type:"voice-user-left",
-     userId:ws.id
-    });
-
-   }
+   if(old)
+   broadcastVoice(old);
 
   }
 
 
   if(
-   d.type==="voice-offer"||
-   d.type==="voice-answer"||
-   d.type==="voice-ice"
+
+   d.type === "voice-offer" ||
+
+   d.type === "voice-answer" ||
+
+   d.type === "voice-ice"
+
   ){
 
-   const to=
+   const to =
    clients.get(d.to);
 
    if(to){
 
     send(to,{
+
      ...d,
+
      from:ws.id
+
     });
 
    }
@@ -169,7 +208,13 @@ wss.on("connection",ws=>{
 
  ws.on("close",()=>{
 
+  const old =
+  ws.voice;
+
   clients.delete(ws.id);
+
+  if(old)
+  broadcastVoice(old);
 
  });
 
@@ -177,6 +222,9 @@ wss.on("connection",ws=>{
 
 
 server.listen(
- process.env.PORT||10000,
- ()=>console.log("FASTMOST Voice Ready")
+
+ process.env.PORT || 10000,
+
+ ()=>console.log("🚀 FASTMOST Voice Ready")
+
 );
