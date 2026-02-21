@@ -1,162 +1,222 @@
-const ws = new WebSocket(
-  (location.protocol === "https:" ? "wss://" : "ws://") + location.host
+// =============================
+// FASTMOST MAIN SCRIPT
+// =============================
+
+
+// Глобальный WebSocket
+window.ws = new WebSocket(
+ location.protocol === "https:"
+ ? "wss://" + location.host
+ : "ws://" + location.host
 );
 
-/* ================== CONFIG ================== */
-const GIPHY_KEY = "sdMbKKOlbQ19nMxNRPXFccE1IxYAmXfy";
 
-/* ================== ELEMENTS ================== */
-const messages = document.getElementById("messages");
-const msg = document.getElementById("msg");
-const online = document.getElementById("online");
-const usersBox = document.getElementById("users");
-const channelName = document.getElementById("channelName");
-const textChannelsBox = document.getElementById("textChannels");
-const emojiPicker = document.getElementById("emojiPicker");
-const gifPicker = document.getElementById("gifPicker");
-
-/* ================== USER ================== */
-const username = localStorage.getItem("username") || "Guest";
-const avatar = localStorage.getItem("avatar") || "/logo.svg";
-
-/* ================== STATE ================== */
+let myId = null;
 let currentChannel = "общий";
 
-/* ================== WS ================== */
+
+// =============================
+// WS EVENTS
+// =============================
+
 ws.onopen = () => {
-  joinChannel(currentChannel);
+
+ console.log("WS connected");
+
+ ws.send(JSON.stringify({
+  type: "join",
+  channel: currentChannel,
+  user: localStorage.getItem("username") || "Guest"
+ }));
+
 };
 
-ws.onmessage = e => {
-  const d = JSON.parse(e.data);
 
-  if (d.type === "online") {
-    online.textContent = "🟢 Онлайн: " + d.count;
+ws.onmessage = (event) => {
+
+ const data = JSON.parse(event.data);
+
+ console.log("WS EVENT:", data);
+
+
+ if (data.type === "init") {
+
+  myId = data.id;
+
+ }
+
+
+ if (data.type === "message") {
+
+  addMessage(data);
+
+ }
+
+
+ if (data.type === "voice-users") {
+
+  if (window.renderVoiceUsers) {
+   window.renderVoiceUsers(data.users);
   }
 
-  if (d.type === "users") {
-    usersBox.innerHTML = "";
-    d.users.forEach(u => {
-      const el = document.createElement("div");
-      el.className = "user-item";
-      el.innerHTML = `<img src="${u.avatar}"><span>${u.username}</span>`;
-      usersBox.appendChild(el);
-    });
-  }
+ }
 
-  if (d.type === "history") {
-    messages.innerHTML = "";
-    d.messages.forEach(renderMessage);
-    messages.scrollTop = messages.scrollHeight;
-  }
-
-  if (d.type === "message" && d.channel === currentChannel) {
-    renderMessage(d);
-    messages.scrollTop = messages.scrollHeight;
-  }
 };
 
-/* ================== CHAT ================== */
-function renderMessage(m) {
-  const d = document.createElement("div");
-  d.className = "message";
-  d.innerHTML = `
-    <span class="user">${m.user}</span>
-    <span class="time">${m.time}</span>
-    <div class="text">${m.text}</div>
-  `;
-  messages.appendChild(d);
+
+// =============================
+// CHAT
+// =============================
+
+function sendMessage(){
+
+ const input =
+ document.getElementById("msg");
+
+ if (!input || !input.value) return;
+
+
+ ws.send(JSON.stringify({
+
+  type: "message",
+
+  text: input.value,
+
+  user: localStorage.getItem("username") || "Guest",
+
+  channel: currentChannel
+
+ }));
+
+ input.value = "";
+
 }
 
-function send() {
-  if (!msg.value.trim()) return;
 
-  ws.send(JSON.stringify({
-    type: "message",
-    channel: currentChannel,
-    user: username,
-    avatar,
-    text: msg.value,
-    time: new Date().toLocaleTimeString().slice(0, 5)
-  }));
+function addMessage(msg){
 
-  msg.value = "";
+ const container =
+ document.getElementById("messages");
+
+ if (!container) return;
+
+
+ const div =
+ document.createElement("div");
+
+ div.className = "message";
+
+ div.innerHTML = `
+ <b>${msg.user}</b>: ${msg.text}
+ `;
+
+ container.appendChild(div);
+
+ container.scrollTop =
+ container.scrollHeight;
+
 }
 
-/* ================== CHANNELS ================== */
-function joinChannel(name) {
-  currentChannel = name;
-  channelName.textContent = "# " + name;
-  messages.innerHTML = "";
 
-  document.querySelectorAll(".channel").forEach(c =>
-    c.classList.remove("active")
-  );
+// =============================
+// CHANNEL
+// =============================
 
-  const active = [...document.querySelectorAll(".channel")]
-    .find(c => c.dataset.name === name);
-  if (active) active.classList.add("active");
+function joinChannel(channel){
 
-  ws.send(JSON.stringify({
-    type: "join",
-    channel: name,
-    user: username,
-    avatar
-  }));
+ currentChannel = channel;
+
+ const el =
+ document.getElementById("channelName");
+
+ if (el) el.textContent = "# " + channel;
+
+
+ ws.send(JSON.stringify({
+
+  type: "join",
+
+  channel,
+
+  user: localStorage.getItem("username")
+
+ }));
+
 }
 
-function createTextChannel() {
-  const name = prompt("Название канала");
-  if (!name) return;
 
-  const div = document.createElement("div");
-  div.className = "channel";
-  div.dataset.name = name;
-  div.textContent = "# " + name;
-  div.onclick = () => joinChannel(name);
+// =============================
+// CREATE CHANNELS
+// =============================
 
-  textChannelsBox.appendChild(div);
+function createTextChannel(){
+
+ const name =
+ prompt("Название канала:");
+
+ if (!name) return;
+
+ const div =
+ document.createElement("div");
+
+ div.className = "channel text";
+
+ div.innerText = name;
+
+ div.onclick =
+ () => joinChannel(name);
+
+ document
+ .getElementById("textChannels")
+ .appendChild(div);
+
 }
 
-/* ================== EMOJI ================== */
-const emojis = "😀 😁 😂 🤣 😊 😎 😍 😘 🤔 😴 😡 👍 👎 👏 🙌 🔥 💯 ❤️ 🎉 👀 💀".split(" ");
-emojiPicker.innerHTML = emojis
-  .map(e => `<span onclick="addEmoji('${e}')">${e}</span>`)
-  .join("");
 
-function addEmoji(e) {
-  msg.value += e;
+function createVoiceChannel(){
+
+ const name =
+ prompt("Название voice:");
+
+ if (!name) return;
+
+ const div =
+ document.createElement("div");
+
+ div.className = "channel voice";
+
+ div.innerText = name;
+
+ div.onclick =
+ () => joinVoice(name);
+
+ document
+ .getElementById("voiceChannels")
+ .appendChild(div);
+
 }
 
-function toggleEmoji() {
-  emojiPicker.classList.toggle("hidden");
-  gifPicker.classList.add("hidden");
+
+// =============================
+// USER CONTROLS
+// =============================
+
+function toggleMute(){
+
+ if (!window.localStream) return;
+
+ const track =
+ window.localStream
+ .getAudioTracks()[0];
+
+ track.enabled =
+ !track.enabled;
+
 }
 
-/* ================== GIF ================== */
-async function toggleGif() {
-  gifPicker.classList.toggle("hidden");
-  emojiPicker.classList.add("hidden");
-  loadGifs("funny");
-}
 
-async function loadGifs(query) {
-  gifPicker.innerHTML = "Загрузка GIF...";
+function toggleDeafen(){
 
-  const r = await fetch(
-    `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(query)}&limit=12`
-  );
-  const d = await r.json();
+ leaveVoice();
 
-  gifPicker.innerHTML = "";
-  d.data.forEach(g => {
-    const img = document.createElement("img");
-    img.src = g.images.fixed_width.url;
-    img.onclick = () => {
-      msg.value = `<img src="${img.src}" class="gif">`;
-      send();
-      gifPicker.classList.add("hidden");
-    };
-    gifPicker.appendChild(img);
-  });
 }
